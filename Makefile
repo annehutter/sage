@@ -29,7 +29,7 @@ INCL   =	./code/core_allvars.h  \
 WITH-QUASAR-LUM = yes
 
 ifdef WITH-QUASAR-LUM
-    OPT += -DWITH_QUASAR_LUM
+    OPT += -DWITH_QSO
 endif
 
 ifdef USE-MPI

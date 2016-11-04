@@ -65,12 +65,13 @@ void deal_with_galaxy_merger(int p, int merger_centralgal, int centralgal, doubl
   // grow black hole through accretion from cold disk during mergers, a la Kauffmann & Haehnelt (2000)
   if(AGNrecipeOn)
   {
-#ifdef WITH_QUASAR_LUM
-    printf("deal with galaxy merger\t%d: mergTime = %e\t mergTimeInit = %e\t dt = %e\n", p, Gal[p].MergTime, Gal[p].MergTimeInit, dt*(step+1));
-    grow_black_hole(merger_centralgal, p, mass_ratio, time);
-#else
-    grow_black_hole(merger_centralgal, mass_ratio);
-#endif
+    if(TrackBHgrowthOn == 1)
+    {
+      printf("deal with galaxy merger\t%d: mergTime = %e\t mergTimeInit = %e\t dt = %e\n", p, Gal[p].MergTime, Gal[p].MergTimeInit, dt*(step+1));
+      grow_black_hole_trackBHgrowth(merger_centralgal, p, mass_ratio, time);
+    }else{
+      grow_black_hole(merger_centralgal, mass_ratio);
+    }
   }
 
   // starburst recipe similar to Somerville et al. 2001
@@ -94,11 +95,7 @@ void deal_with_galaxy_merger(int p, int merger_centralgal, int centralgal, doubl
 
 
 
-#ifdef WITH_QUASAR_LUM
-void grow_black_hole(int merger_centralgal, int p, double mass_ratio, double time)
-#else
 void grow_black_hole(int merger_centralgal, double mass_ratio)
-#endif
 {
   double BHaccrete, metallicity;
 
@@ -111,10 +108,6 @@ void grow_black_hole(int merger_centralgal, double mass_ratio)
     if(BHaccrete > Gal[merger_centralgal].ColdGas)
       BHaccrete = Gal[merger_centralgal].ColdGas;
 
-#ifdef WITH_QUASAR_LUM
-    produce_QSOluminosity(merger_centralgal, p, BHaccrete, time);
-#endif
-
     metallicity = get_metallicity(Gal[merger_centralgal].ColdGas, Gal[merger_centralgal].MetalsColdGas);
     Gal[merger_centralgal].BlackHoleMass += BHaccrete;
     Gal[merger_centralgal].ColdGas -= BHaccrete;
@@ -126,7 +119,31 @@ void grow_black_hole(int merger_centralgal, double mass_ratio)
   }
 }
 
+void grow_black_hole_trackBHgrowth(int merger_centralgal, int p, double mass_ratio, double time)
+{
+  double BHaccrete, metallicity;
 
+  if(Gal[merger_centralgal].ColdGas > 0.0)
+  {
+    BHaccrete = BlackHoleGrowthRate * mass_ratio /
+      (1.0 + pow(280.0 / Gal[merger_centralgal].Vvir, 2.0)) * Gal[merger_centralgal].ColdGas;
+
+    // cannot accrete more gas than is available!
+    if(BHaccrete > Gal[merger_centralgal].ColdGas)
+      BHaccrete = Gal[merger_centralgal].ColdGas;
+
+    track_BHgrowth(merger_centralgal, p, BHaccrete, time);
+
+    metallicity = get_metallicity(Gal[merger_centralgal].ColdGas, Gal[merger_centralgal].MetalsColdGas);
+    Gal[merger_centralgal].BlackHoleMass += BHaccrete;
+    Gal[merger_centralgal].ColdGas -= BHaccrete;
+    Gal[merger_centralgal].MetalsColdGas -= metallicity * BHaccrete;
+
+    Gal[merger_centralgal].QuasarModeBHaccretionMass += BHaccrete;
+
+    quasar_mode_wind(merger_centralgal, BHaccrete);
+  }
+}
 
 void quasar_mode_wind(int gal, float BHaccrete)
 {

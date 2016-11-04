@@ -64,13 +64,13 @@ void check_disk_instability(int p, int centralgal, int halonr, double time, doub
       unstable_gas_fraction = unstable_gas / Gal[p].ColdGas;
       if(AGNrecipeOn > 0)
       {
-#ifdef WITH_QUASAR_LUM
-        // Gal[p].MergSnap = Gal[p].SnapNum;
-        printf("disk instability\t time = %e\t p = %d \t MergTimeInit = %e\t MergTime = %e\n", time, p, Gal[p].MergTimeInit, Gal[p].MergTime);
-        grow_black_hole(p, p, unstable_gas_fraction, time);
-#else
-        grow_black_hole(p, unstable_gas_fraction);
-#endif
+        if(TrackBHgrowthOn == 1)
+        {        // Gal[p].MergSnap = Gal[p].SnapNum;
+          printf("disk instability\t time = %e\t p = %d \t MergTimeInit = %e\t MergTime = %e\n", time, p, Gal[p].MergTimeInit, Gal[p].MergTime);
+          grow_black_hole_trackBHgrowth(p, p, unstable_gas_fraction, time);
+        }else{
+          grow_black_hole(p, unstable_gas_fraction);
+        }
       }
       collisional_starburst_recipe(unstable_gas_fraction, p, centralgal, time, dt, halonr, 1, step);
     }

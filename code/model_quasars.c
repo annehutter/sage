@@ -8,9 +8,9 @@
 #include "core_allvars.h"
 #include "core_proto.h"
 
-#ifdef WITH_QUASAR_LUM
+#ifdef WITH_QSO
 
-void produce_QSOluminosity(int merger_centralgal, int p, double BHaccrete, double time)
+void track_BHgrowth(int merger_centralgal, int p, double BHaccrete, double time)
 {
     int i,j;
     float tmpQSOBHaccrete, tmpQSOmergeAge, tmpQSOmergeTime, tmpQSOmergeSnap;
@@ -19,8 +19,8 @@ void produce_QSOluminosity(int merger_centralgal, int p, double BHaccrete, doubl
 
     printf("p = %d\ttime = %e\t Type = %d\tSnapNum = %d\tMergSnap = %d\n", p, time, Gal[p].Type, Gal[p].SnapNum, Gal[p].MergSnap);
 
-    if(Gal[p].SnapNum != Gal[p].MergSnap)
-    {
+    // if(Gal[p].SnapNum != Gal[p].MergSnap)
+    // {
         tmpQSOmergeAge = time;
         tmpQSOmergeTime =  Gal[p].MergTimeInit - Gal[p].MergTime;
         if(tmpQSOmergeTime <= 0.)
@@ -77,7 +77,7 @@ void produce_QSOluminosity(int merger_centralgal, int p, double BHaccrete, doubl
         for(j = 0; j < MERGER_NUM; j++)
             printf("mergeAge  = %e\t", Gal[merger_centralgal].QSOmergeTime[j]);
         printf("\n\n");
-    }
+    // }
 }
 
 #endif

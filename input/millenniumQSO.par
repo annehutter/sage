@@ -15,7 +15,7 @@ LastFile          7
 
 NumOutputs        8   ; sets the desired number of galaxy outputs; use -1 for all outputs
 
-% List your output snapshots after the arrow, highest to lowest (ignored when NumOutputs=-1). 
+% List your output snapshots after the arrow, highest to lowest (ignored when NumOutputs=-1).
 -> 63 37 32 27 23 20 18 16
 
 
@@ -28,7 +28,7 @@ SimulationDir         ./input/treefiles/millennium/millennium_mini/
 FileWithSnapList      ./input/treefiles/millennium/millennium.a_list
 LastSnapShotNr        63
 
-Omega           0.25 
+Omega           0.25
 OmegaLambda     0.75
 BaryonFrac      0.17
 Hubble_h        0.73
@@ -45,6 +45,7 @@ AGNrecipeOn           2   ;0: switch off; 1: empirical model; 2: Bondi-Hoyle mod
 SupernovaRecipeOn     1   ;0: switch off
 ReionizationOn        1   ;0: switch off
 DiskInstabilityOn     1   ;0: switch off; 1: bulge and BH growth through instabilities w. instability starbursts
+TrackBHgrowthOn       1   ;0: switch off; 1: store BH growth by mergers & disk instabilities
 
 
 %------------------------------------------
@@ -83,4 +84,3 @@ EtaSN                   5.0e-3  ;supernova efficiency
 UnitLength_in_cm          3.08568e+24 ;WATCH OUT: Mpc/h
 UnitMass_in_g             1.989e+43   ;WATCH OUT: 10^10Msun
 UnitVelocity_in_cm_per_s  100000      ;WATCH OUT: km/s
-

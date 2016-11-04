@@ -110,6 +110,10 @@ void read_parameter_file(char *fname)
   addr[nt] = &AGNrecipeOn;
   id[nt++] = INT;
 
+  strcpy(tag[nt], "TrackBHgrowthOn");
+  addr[nt] = &TrackBHgrowthOn;
+  id[nt++] = INT;
+
   strcpy(tag[nt], "BaryonFrac");
   addr[nt] = &BaryonFrac;
   id[nt++] = DOUBLE;
@@ -249,17 +253,17 @@ void read_parameter_file(char *fname)
       errorFlag = 1;
     }
   }
-	
+
 	assert(!errorFlag);
 	printf("\n");
-	
+
 	assert(LastSnapShotNr+1 > 0 && LastSnapShotNr+1 < ABSOLUTEMAXSNAPS);
 	MAXSNAPS = LastSnapShotNr + 1;
 
 	if(!(NOUT == -1 || (NOUT > 0 && NOUT <= ABSOLUTEMAXSNAPS)))
 		printf("NumOutputs must be -1 or between 1 and %i\n", ABSOLUTEMAXSNAPS);
 	assert(NOUT == -1 || (NOUT > 0 && NOUT <= ABSOLUTEMAXSNAPS));
-	
+
 	// read in the output snapshot list
 	if(NOUT == -1)
 	{
@@ -293,7 +297,7 @@ void read_parameter_file(char *fname)
 
 		fclose(fd);
 		assert(done);
-		
+
 		printf("\n");
 	}
 

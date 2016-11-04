@@ -1,24 +1,24 @@
 #include "core_allvars.h"
 
 
-// galaxy data 
-struct GALAXY			
+// galaxy data
+struct GALAXY
   *Gal, *HaloGal;
 
 struct halo_data *Halo;
 
-// auxiliary halo data 
-struct halo_aux_data		
+// auxiliary halo data
+struct halo_aux_data
   *HaloAux;
 
 
-// misc 
+// misc
 int FirstFile;
 int LastFile;
 int MaxGals;
 int FoF_MaxGals;
-int Ntrees;			   // number of trees in current file 
-int NumGals;			 // Total number of galaxies stored for current tree 
+int Ntrees;			   // number of trees in current file
+int NumGals;			 // Total number of galaxies stored for current tree
 
 int GalaxyCounter; // unique galaxy ID for main progenitor line in tree
 
@@ -51,15 +51,16 @@ double EnergySNcode, EnergySN;
 double EtaSNcode, EtaSN;
 
 
-// recipe flags 
+// recipe flags
 int ReionizationOn;
 int SupernovaRecipeOn;
 int DiskInstabilityOn;
 int AGNrecipeOn;
 int SFprescription;
+int TrackBHgrowthOn;
 
 
-// recipe parameters 
+// recipe parameters
 double RecycleFraction;
 double Yield;
 double FracZleaveDisk;
@@ -77,7 +78,7 @@ double Reionization_zr;
 double ThresholdSatDisruption;
 
 
-// more misc 
+// more misc
 double UnitLength_in_cm,
   UnitTime_in_s,
   UnitVelocity_in_cm_per_s,

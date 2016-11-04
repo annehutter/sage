@@ -11,7 +11,7 @@ do {                                                                \
   myexit(sigterm);                                                \
 } while(0)
 
-#define  STEPS 10         // Number of integration intervals between two snapshots 
+#define  STEPS 10         // Number of integration intervals between two snapshots
 #define  MAXGALFAC 1
 #define  ALLOCPARAMETER 10.0
 #define  MAX_NODE_NAME_LEN 50
@@ -34,12 +34,12 @@ do {                                                                \
 #define  SEC_PER_MEGAYEAR   3.155e13
 #define  SEC_PER_YEAR       3.155e7
 
-#ifdef WITH_QUASAR_LUM
+#ifdef WITH_QSO
 #define  MERGER_NUM  10    // number of mergers that are stored for each galaxy
 #endif
 
 // This structure contains the properties that are output
-struct GALAXY_OUTPUT  
+struct GALAXY_OUTPUT
 {
   int   SnapNum;
   int   Type;
@@ -49,7 +49,7 @@ struct GALAXY_OUTPUT
   int   SAGEHaloIndex;
   int   SAGETreeIndex;
   long long   SimulationHaloIndex;
-  
+
   int   mergeType;  //0=none; 1=minor merger; 2=major merger; 3=disk instability; 4=disrupt to ICS
   int   mergeIntoID;
   int   mergeIntoSnapNum;
@@ -59,7 +59,7 @@ struct GALAXY_OUTPUT
   float Pos[3];
   float Vel[3];
   float Spin[3];
-  int   Len;   
+  int   Len;
   float Mvir;
   float CentralMvir;
   float Rvir;
@@ -67,7 +67,7 @@ struct GALAXY_OUTPUT
   float Vmax;
   float VelDisp;
 
-  // baryonic reservoirs 
+  // baryonic reservoirs
   float ColdGas;
   float StellarMass;
   float BulgeMass;
@@ -89,8 +89,8 @@ struct GALAXY_OUTPUT
   float SfrBulge;
   float SfrDiskZ;
   float SfrBulgeZ;
-  
-  // misc 
+
+  // misc
   float DiskScaleRadius;
   float Cooling;
   float Heating;
@@ -103,8 +103,7 @@ struct GALAXY_OUTPUT
   float infallMvir;
   float infallVvir;
   float infallVmax;
-  
-#ifdef WITH_QUASAR_LUM
+
   // quasar luminosity parameters
   float QSOBHaccrete[MERGER_NUM];
   float QSOmergeAge[MERGER_NUM];
@@ -112,10 +111,9 @@ struct GALAXY_OUTPUT
   float SatBHaccrete[MERGER_NUM];
   float SatMergeAge[MERGER_NUM];
   float SatMergeTime[MERGER_NUM];
-  
+
   int MergSnap;
   int QSOmergSnap[MERGER_NUM];
-#endif
 };
 
 
@@ -138,7 +136,7 @@ struct GALAXY
   // (sub)halo properties
   float Pos[3];
   float Vel[3];
-  int   Len;   
+  int   Len;
   float Mvir;
   float deltaMvir;
   float CentralMvir;
@@ -146,7 +144,7 @@ struct GALAXY
   float Vvir;
   float Vmax;
 
-  // baryonic reservoirs 
+  // baryonic reservoirs
   float ColdGas;
   float StellarMass;
   float BulgeMass;
@@ -171,12 +169,10 @@ struct GALAXY
   float SfrBulgeColdGas[STEPS];
   float SfrBulgeColdGasMetals[STEPS];
 
-  // misc 
+  // misc
   float DiskScaleRadius;
   float MergTime;
-#ifdef WITH_QUASAR_LUM
   float MergTimeInit;
-#endif
   double Cooling;
   double Heating;
   float r_heat;
@@ -190,8 +186,7 @@ struct GALAXY
   float infallMvir;
   float infallVvir;
   float infallVmax;
-  
-#ifdef WITH_QUASAR_LUM
+
   // quasar luminosity parameters
   float QSOBHaccrete[MERGER_NUM];
   float QSOmergeAge[MERGER_NUM];
@@ -199,16 +194,15 @@ struct GALAXY
   float SatBHaccrete[MERGER_NUM];
   float SatMergeAge[MERGER_NUM];
   float SatMergeTime[MERGER_NUM];
-  
+
   int MergSnap;
   int QSOmergSnap[MERGER_NUM];
-#endif
 }
 *Gal, *HaloGal;
 
 
 // auxiliary halo data
-struct halo_aux_data   
+struct halo_aux_data
 {
   int DoneFlag;
   int HaloFlag;
@@ -218,12 +212,12 @@ struct halo_aux_data
 *HaloAux;
 
 
-extern int    FirstFile;    // first and last file for processing 
+extern int    FirstFile;    // first and last file for processing
 extern int    LastFile;
 
-extern int    Ntrees;      // number of trees in current file 
-extern int    NumGals;     // Total number of galaxies stored for current tree 
-extern int    MaxGals;     // Maximum number of galaxies allowed for current tree  
+extern int    Ntrees;      // number of trees in current file
+extern int    NumGals;     // Total number of galaxies stored for current tree
+extern int    MaxGals;     // Maximum number of galaxies allowed for current tree
 extern int    FoF_MaxGals;
 
 extern int    GalaxyCounter;     // unique galaxy ID for main progenitor line in tree
@@ -257,14 +251,15 @@ extern double Hubble_h;
 extern double EnergySNcode, EnergySN;
 extern double EtaSNcode, EtaSN;
 
-// recipe flags 
+// recipe flags
 extern int    ReionizationOn;
 extern int    SupernovaRecipeOn;
 extern int    DiskInstabilityOn;
 extern int    AGNrecipeOn;
 extern int    SFprescription;
+extern int    TrackBHgrowthOn;
 
-// recipe parameters 
+// recipe parameters
 extern double RecycleFraction;
 extern double Yield;
 extern double FracZleaveDisk;
@@ -290,7 +285,7 @@ extern double UnitLength_in_cm,
   UnitDensity_in_cgs,
   UnitCoolingRate_in_cgs,
   UnitEnergy_in_cgs,
-  UnitTime_in_Megayears, 
+  UnitTime_in_Megayears,
   G,
   Hubble,
   a0, ar;

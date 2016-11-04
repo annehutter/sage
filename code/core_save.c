@@ -210,7 +210,7 @@ void prepare_galaxy_for_output(int filenr, int tree, struct GALAXY *g, struct GA
     o->infallVmax = 0.0;
   }
 
-#ifdef WITH_QUASAR_LUM
+#ifdef WITH_QSO
     for (j = 0; j < MERGER_NUM; j++)
     {
         o->QSOBHaccrete[j] = g->QSOBHaccrete[j];

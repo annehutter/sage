@@ -76,9 +76,6 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
 {
   int ngal, prog, mother_halo=-1, i, j, first_occupied, lenmax, lenoccmax, centralgal;
   double previousMvir, previousVvir, previousVmax;
-#ifdef WITH_QUASAR_LUM
-  double previousQSOluminosity, previousQSOmergeAge, previousQSOcurrentLuminosity, previousQSOdecayTime;
-#endif
   int step;
 
   lenmax = 0;
@@ -210,10 +207,11 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
             {
               // here the galaxy has gone from type 1 to type 2 or otherwise doesn't have a merging time.
               Gal[ngal].MergTime = estimate_merging_time(halonr, Halo[halonr].FirstHaloInFOFgroup, ngal);
-#ifdef WITH_QUASAR_LUM
-              Gal[ngal].MergTimeInit = Gal[ngal].MergTime;
-              Gal[ngal].MergSnap = Gal[ngal].SnapNum;
-#endif
+              if(TrackBHgrowthOn == 1)
+              {
+                Gal[ngal].MergTimeInit = Gal[ngal].MergTime;
+                Gal[ngal].MergSnap = Gal[ngal].SnapNum;
+              }
             }
             Gal[ngal].Type = 1;
           }
@@ -229,12 +227,11 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
             // here the galaxy has gone from type 0 to type 2 - merge it!
             Gal[ngal].MergTime = 0.0;
 
-#ifdef WITH_QUASAR_LUM
-            double deltaT = Age[Gal[ngal].SnapNum] - Age[Halo[halonr].SnapNum];
-
-            Gal[ngal].MergTimeInit = 0.0;
-            Gal[ngal].MergSnap = Gal[ngal].SnapNum;
-#endif
+            if(TrackBHgrowthOn == 1)
+            {
+              Gal[ngal].MergTimeInit = 0.0;
+              Gal[ngal].MergSnap = Gal[ngal].SnapNum;
+            }
             Gal[ngal].infallMvir = previousMvir;
             Gal[ngal].infallVvir = previousVvir;
             Gal[ngal].infallVmax = previousVmax;
