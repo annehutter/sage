@@ -22,6 +22,9 @@ dilute = 7500       # Number of galaxies to plot in scatter plots
 sSFRcut = -11.0     # Divide quiescent from star forming galaxies (when plotmags=0)
 MERGER_NUM = 10
 
+Grav_const = 6.67e-8
+R = 8.31e7
+
 matplotlib.rcdefaults()
 
 plt.rc('axes', color_cycle=[
@@ -1425,6 +1428,9 @@ class Results:
         yr = 365.*24.*3600.
 
         efficiency = 0.1
+        gamma = 5./3.
+        mu = 1.22
+        Temp = 6.e4
 
         H = 100.
         AgeRedshift = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM/(1.+self.z)**3)**0.5)
@@ -1437,13 +1443,27 @@ class Results:
 
         print len(w)
 
+        rBondi = np.empty(len(w), dtype=np.float32)
         BHaccrete = np.empty(len(w), dtype=np.float64)
         mergeAge = np.empty(len(w))
         mergeTime = np.empty(len(w))
         luminosity = np.zeros(len(w), dtype=np.float64)
         luminosity2 = np.zeros(len(w), dtype=np.float64)
 
+        # Compute Bondi radius
+        cs = (gamma*R*Temp/mu)**0.5
+        rBondi = Grav_const/cs**2*G.BlackHoleMass[w]*2.e33*1.e10
+
+        print G.BlackHoleMass[w]
+        # Compute accretion time
+        tacc = rBondi/cs
+        print rBondi
+        print cs
+        print tacc
+        # Compute Eddington luminosity
+
         for i in range(MERGER_NUM):
+            print i
             BHaccrete = G.QSOBHaccrete[w,i]
             mergeAge = G.QSOmergeAge[w,i]
             mergeTime = G.QSOmergeTime[w,i]
@@ -1451,9 +1471,7 @@ class Results:
             print BHaccrete
 
             time = mergeAge-(AgeUniverse-AgeRedshift)
-            print time
-            print mergeTime
-            time_factor = 1.#np.exp(time/mergeTime)
+            time_factor = np.exp(-time/tacc)
             time_factor2 = 1.#np.exp(time/5.e-5)
             print time_factor
 
