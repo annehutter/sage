@@ -43,11 +43,11 @@ void save_galaxies(int filenr, int tree)
       }
     }
   }
-    
+
   for(i = 0; i < NumGals; i++)
     if(HaloGal[i].mergeIntoID > -1)
-      HaloGal[i].mergeIntoID = OutputGalOrder[HaloGal[i].mergeIntoID];    
-  
+      HaloGal[i].mergeIntoID = OutputGalOrder[HaloGal[i].mergeIntoID];
+
   // now prepare and write galaxies
   for(n = 0; n < NOUT; n++)
   {
@@ -73,7 +73,7 @@ void save_galaxies(int filenr, int tree)
     for(i = 0; i < NumGals; i++)
     {
       if(HaloGal[i].SnapNum == ListOutputSnaps[n])
-      {        
+      {
         prepare_galaxy_for_output(filenr, tree, &HaloGal[i], &galaxy_output);
         myfwrite(&galaxy_output, sizeof(struct GALAXY_OUTPUT), 1, save_fd[n]);
 
@@ -100,7 +100,7 @@ void prepare_galaxy_for_output(int filenr, int tree, struct GALAXY *g, struct GA
 
   // assume that because there are so many files, the trees per file will be less than 100000
   // required for limits of long long
-  if(LastFile>=10000) 
+  if(LastFile>=10000)
   {
       assert( g->GalaxyNr < TREE_MUL_FAC ); // breaking tree size assumption
       assert(tree < (FILENR_MUL_FAC/10)/TREE_MUL_FAC);
@@ -120,7 +120,7 @@ void prepare_galaxy_for_output(int filenr, int tree, struct GALAXY *g, struct GA
       assert( o->GalaxyIndex - TREE_MUL_FAC*tree - FILENR_MUL_FAC*filenr == g->GalaxyNr );
       o->CentralGalaxyIndex = HaloGal[HaloAux[Halo[g->HaloNr].FirstHaloInFOFgroup].FirstGalaxy].GalaxyNr + TREE_MUL_FAC * tree + FILENR_MUL_FAC * filenr;
   }
-    
+
   o->SAGEHaloIndex = g->HaloNr;
   o->SAGETreeIndex = tree;
   o->SimulationHaloIndex = Halo[g->HaloNr].MostBoundID;
@@ -159,18 +159,18 @@ void prepare_galaxy_for_output(int filenr, int tree, struct GALAXY *g, struct GA
   o->MetalsHotGas = g->MetalsHotGas;
   o->MetalsEjectedMass = g->MetalsEjectedMass;
   o->MetalsICS = g->MetalsICS;
-  
+
   o->SfrDisk = 0.0;
   o->SfrBulge = 0.0;
   o->SfrDiskZ = 0.0;
   o->SfrBulgeZ = 0.0;
-  
-  // NOTE: in Msun/yr 
+
+  // NOTE: in Msun/yr
   for(step = 0; step < STEPS; step++)
   {
     o->SfrDisk += g->SfrDisk[step] * UnitMass_in_g / UnitTime_in_s * SEC_PER_YEAR / SOLAR_MASS / STEPS;
     o->SfrBulge += g->SfrBulge[step] * UnitMass_in_g / UnitTime_in_s * SEC_PER_YEAR / SOLAR_MASS / STEPS;
-    
+
     if(g->SfrDiskColdGas[step] > 0.0)
       o->SfrDiskZ += g->SfrDiskColdGasMetals[step] / g->SfrDiskColdGas[step] / STEPS;
 
@@ -193,7 +193,7 @@ void prepare_galaxy_for_output(int filenr, int tree, struct GALAXY *g, struct GA
 
   o->TimeOfLastMajorMerger = g->TimeOfLastMajorMerger * UnitTime_in_Megayears;
   o->TimeOfLastMinorMerger = g->TimeOfLastMinorMerger * UnitTime_in_Megayears;
-	
+
   o->OutflowRate = g->OutflowRate * UnitMass_in_g / UnitTime_in_s * SEC_PER_YEAR / SOLAR_MASS;
 
   //infall properties
@@ -210,6 +210,19 @@ void prepare_galaxy_for_output(int filenr, int tree, struct GALAXY *g, struct GA
     o->infallVmax = 0.0;
   }
 
+#ifdef WITH_QUASAR_LUM
+    for (j = 0; j < MERGER_NUM; j++)
+    {
+        o->QSOBHaccrete[j] = g->QSOBHaccrete[j];
+        o->QSOmergeAge[j] = g->QSOmergeAge[j];
+        o->QSOmergeTime[j] = g->QSOmergeTime[j];
+        o->SatBHaccrete[j] = g->SatBHaccrete[j];
+        o->SatMergeAge[j] = g->SatMergeAge[j];
+        o->SatMergeTime[j] = g->SatMergeTime[j];
+        o->QSOmergSnap[j] = g->QSOmergSnap[j];
+    }
+    o->MergSnap = g->MergSnap;
+#endif
 }
 
 
@@ -234,9 +247,8 @@ void finalize_galaxy_file(int filenr)
     fclose( save_fd[n] );
     save_fd[n] = NULL;
   }
-  
+
 }
 
 #undef TREE_MUL_FAC
 #undef FILENR_MUL_FAC
-

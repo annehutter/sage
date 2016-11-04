@@ -45,7 +45,13 @@ void collisional_starburst_recipe(double mass_ratio, int merger_centralgal, int 
 void update_from_star_formation(int p, double stars, double metallicity);
 void update_from_feedback(int p, int centralgal, double reheated_mass, double ejected_mass, double metallicity);
 void make_bulge_from_burst(int p);
+#ifdef WITH_QUASAR_LUM
+void grow_black_hole(int merger_centralgal, int p, double mass_ratio, double time);
+double compute_QSOluminosity(int merger_centralgal, double time);
+void produce_QSOluminosity(int merger_centralgal, int p, double BHaccrete, double time);
+#else
 void grow_black_hole(int merger_centralgal, double mass_ratio);
+#endif
 void check_disk_instability(int p, int centralgal, int halonr, double time, double dt, int step);
 
 void strip_from_satellite(int halonr, int centralgal, int gal);

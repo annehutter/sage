@@ -86,6 +86,20 @@ void init_galaxy(int p, int halonr)
   Gal[p].infallVvir = -1.0;
   Gal[p].infallVmax = -1.0;
   
+#ifdef WITH_QUASAR_LUM
+  // quasar luminosity parameters
+  for(j = 0; j < MERGER_NUM; j++)
+  {
+    Gal[p].QSOBHaccrete[j] = 0.0;
+    Gal[p].QSOmergeAge[j] = 0.0;
+    Gal[p].QSOmergeTime[j] = 0.0;
+    Gal[p].SatBHaccrete[j] = 0.0;
+    Gal[p].SatMergeAge[j] = 0.0;
+    Gal[p].SatMergeTime[j] = 0.0;
+    Gal[p].QSOmergSnap[j] = 0;
+  }
+  Gal[p].MergSnap = 0;
+#endif
 }
 
 

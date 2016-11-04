@@ -48,10 +48,10 @@ void construct_galaxies(int halonr, int tree)
   }
 
   // At this point, the galaxies for all progenitors of this halo have been
-  // properly constructed. Also, the galaxies of the progenitors of all other 
+  // properly constructed. Also, the galaxies of the progenitors of all other
   // halos in the same FOF group have been constructed as well. We can hence go
   // ahead and construct all galaxies for the subhalos in this FOF halo, and
-  // evolve them in time. 
+  // evolve them in time.
 
   fofhalo = Halo[halonr].FirstHaloInFOFgroup;
   if(HaloAux[fofhalo].HaloFlag == 1)
@@ -76,6 +76,9 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
 {
   int ngal, prog, mother_halo=-1, i, j, first_occupied, lenmax, lenoccmax, centralgal;
   double previousMvir, previousVvir, previousVmax;
+#ifdef WITH_QUASAR_LUM
+  double previousQSOluminosity, previousQSOmergeAge, previousQSOcurrentLuminosity, previousQSOdecayTime;
+#endif
   int step;
 
   lenmax = 0;
@@ -117,19 +120,19 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
             Gal = myrealloc(Gal, FoF_MaxGals * sizeof(struct GALAXY));
         }
         assert(ngal < FoF_MaxGals);
-            
 
-      // This is the cruical line in which the properties of the progenitor galaxies 
-      // are copied over (as a whole) to the (temporary) galaxies Gal[xxx] in the current snapshot 
-      // After updating their properties and evolving them 
-      // they are copied to the end of the list of permanent galaxies HaloGal[xxx] 
+
+      // This is the cruical line in which the properties of the progenitor galaxies
+      // are copied over (as a whole) to the (temporary) galaxies Gal[xxx] in the current snapshot
+      // After updating their properties and evolving them
+      // they are copied to the end of the list of permanent galaxies HaloGal[xxx]
 
       Gal[ngal] = HaloGal[HaloAux[prog].FirstGalaxy + i];
       Gal[ngal].HaloNr = halonr;
 
       Gal[ngal].dT = -1.0;
 
-      // this deals with the central galaxies of (sub)halos 
+      // this deals with the central galaxies of (sub)halos
       if(Gal[ngal].Type == 0 || Gal[ngal].Type == 1)
       {
         // this halo shouldn't hold a galaxy that has already merged; remove it from future processing
@@ -146,7 +149,7 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
 
         if(prog == first_occupied)
         {
-          // update properties of this galaxy with physical properties of halo 
+          // update properties of this galaxy with physical properties of halo
           Gal[ngal].MostBoundID = Halo[halonr].MostBoundID;
 
           for(j = 0; j < 3; j++)
@@ -154,11 +157,11 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
             Gal[ngal].Pos[j] = Halo[halonr].Pos[j];
             Gal[ngal].Vel[j] = Halo[halonr].Vel[j];
           }
-					
+
           Gal[ngal].Len = Halo[halonr].Len;
           Gal[ngal].Vmax = Halo[halonr].Vmax;
 
-					Gal[ngal].deltaMvir = get_virial_mass(halonr) - Gal[ngal].Mvir;
+          Gal[ngal].deltaMvir = get_virial_mass(halonr) - Gal[ngal].Mvir;
 
           if(get_virial_mass(halonr) > Gal[ngal].Mvir)
           {
@@ -184,7 +187,7 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
             // a central galaxy
             Gal[ngal].mergeType = 0;
             Gal[ngal].mergeIntoID = -1;
-            Gal[ngal].MergTime = 999.9;            
+            Gal[ngal].MergTime = 999.9;
 
             Gal[ngal].DiskScaleRadius = get_disk_radius(halonr, ngal);
 
@@ -204,9 +207,14 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
             }
 
             if(Gal[ngal].Type == 0 || Gal[ngal].MergTime > 999.0)
+            {
               // here the galaxy has gone from type 1 to type 2 or otherwise doesn't have a merging time.
               Gal[ngal].MergTime = estimate_merging_time(halonr, Halo[halonr].FirstHaloInFOFgroup, ngal);
-            
+#ifdef WITH_QUASAR_LUM
+              Gal[ngal].MergTimeInit = Gal[ngal].MergTime;
+              Gal[ngal].MergSnap = Gal[ngal].SnapNum;
+#endif
+            }
             Gal[ngal].Type = 1;
           }
         }
@@ -220,7 +228,13 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
           {
             // here the galaxy has gone from type 0 to type 2 - merge it!
             Gal[ngal].MergTime = 0.0;
-          
+
+#ifdef WITH_QUASAR_LUM
+            double deltaT = Age[Gal[ngal].SnapNum] - Age[Halo[halonr].SnapNum];
+
+            Gal[ngal].MergTimeInit = 0.0;
+            Gal[ngal].MergSnap = Gal[ngal].SnapNum;
+#endif
             Gal[ngal].infallMvir = previousMvir;
             Gal[ngal].infallVvir = previousVvir;
             Gal[ngal].infallVmax = previousVmax;
@@ -239,15 +253,15 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
 
   if(ngal == 0)
   {
-    // We have no progenitors with galaxies. This means we create a new galaxy. 
+    // We have no progenitors with galaxies. This means we create a new galaxy.
     init_galaxy(ngal, halonr);
     ngal++;
   }
 
   // Per Halo there can be only one Type 0 or 1 galaxy, all others are Type 2  (orphan)
-  // In fact, this galaxy is very likely to be the first galaxy in the halo if 
-	// first_occupied==FirstProgenitor and the Type0/1 galaxy in FirstProgenitor was also the first one 
-  // This cannot be guaranteed though for the pathological first_occupied!=FirstProgenitor case 
+  // In fact, this galaxy is very likely to be the first galaxy in the halo if
+	// first_occupied==FirstProgenitor and the Type0/1 galaxy in FirstProgenitor was also the first one
+  // This cannot be guaranteed though for the pathological first_occupied!=FirstProgenitor case
 
   for(i = ngalstart, centralgal = -1; i < ngal; i++)
   {
@@ -267,8 +281,9 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
 
 
 
-void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the FOF-background subhalo (i.e. main halo) 
+void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the FOF-background subhalo (i.e. main halo)
 {
+    printf("halonr = %d\tngal = %d\t tree=%d\n", halonr, ngal, tree);
   int p, i, step, centralgal, merger_centralgal, currenthalo, offset;
   double infallingGas, coolingGas, deltaT, time, galaxyBaryons, currentMvir;
 
@@ -277,24 +292,22 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
 
   infallingGas = infall_recipe(centralgal, ngal, ZZ[Halo[halonr].SnapNum]);
 
-  // We integrate things forward by using a number of intervals equal to STEPS 
+  // We integrate things forward by using a number of intervals equal to STEPS
   for(step = 0; step < STEPS; step++)
   {
-
-    // Loop over all galaxies in the halo 
+    // Loop over all galaxies in the halo
     for(p = 0; p < ngal; p++)
     {
-      // Don't treat galaxies that have already merged 
       if(Gal[p].mergeType > 0)
         continue;
 
       deltaT = Age[Gal[p].SnapNum] - Age[Halo[halonr].SnapNum];
       time = Age[Gal[p].SnapNum] - (step + 0.5) * (deltaT / STEPS);
-      
+
       if(Gal[p].dT < 0.0)
         Gal[p].dT = deltaT;
 
-      // For the central galaxy only 
+      // For the central galaxy only
       if(p == centralgal)
       {
         add_infall_to_hot(centralgal, infallingGas / STEPS);
@@ -302,19 +315,19 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
         if(ReIncorporationFactor > 0.0)
           reincorporate_gas(centralgal, deltaT / STEPS);
       }
-			else 
+			else
 				if(Gal[p].Type == 1 && Gal[p].HotGas > 0.0)
 					strip_from_satellite(halonr, centralgal, p);
 
-      // Determine the cooling gas given the halo properties 
+      // Determine the cooling gas given the halo properties
       coolingGas = cooling_recipe(p, deltaT / STEPS);
       cool_gas_onto_galaxy(p, coolingGas);
 
-      // stars form and then explode! 
+      // stars form and then explode!
       starformation_and_feedback(p, centralgal, time, deltaT / STEPS, halonr, step);
     }
 
-    // check for satellite disruption and merger events 
+    // check for satellite disruption and merger events
     for(p = 0; p < ngal; p++)
     {
 
@@ -324,22 +337,24 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
 
         deltaT = Age[Gal[p].SnapNum] - Age[Halo[halonr].SnapNum];
         Gal[p].MergTime -= deltaT / STEPS;
-        
+
         // only consider mergers or disruption for halo-to-baryonic mass ratios below the threshold
         // or for satellites with no baryonic mass (they don't grow and will otherwise hang around forever)
         currentMvir = Gal[p].Mvir - Gal[p].deltaMvir * (1.0 - ((double)step + 1.0) / (double)STEPS);
         galaxyBaryons = Gal[p].StellarMass + Gal[p].ColdGas;
-        if((galaxyBaryons == 0.0) || (galaxyBaryons > 0.0 && (currentMvir / galaxyBaryons <= ThresholdSatDisruption)))        
+        if((galaxyBaryons == 0.0) || (galaxyBaryons > 0.0 && (currentMvir / galaxyBaryons <= ThresholdSatDisruption)))
         {
-          if(Gal[p].Type==1) 
+          if(Gal[p].Type==1)
             merger_centralgal = centralgal;
           else
             merger_centralgal = Gal[p].CentralGal;
 
-          if(Gal[merger_centralgal].mergeType > 0) 
+          if(Gal[merger_centralgal].mergeType > 0)
             merger_centralgal = Gal[merger_centralgal].CentralGal;
 
-          Gal[p].mergeIntoID = NumGals + merger_centralgal;  // position in output 
+          Gal[p].mergeIntoID = NumGals + merger_centralgal;  // position in output
+
+          printf("merger_central = %d\t mergeIntoID = %d\n", merger_centralgal, Gal[p].mergeIntoID);
 
           if(Gal[p].MergTime > 0.0)  // disruption has occured!
           {
@@ -347,15 +362,15 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
           }
           else
           {
-            if(Gal[p].MergTime <= 0.0)  // a merger has occured! 
+            if(Gal[p].MergTime <= 0.0)  // a merger has occured!
             {
-              time = Age[Gal[p].SnapNum] - (step + 0.5) * (deltaT / STEPS);   
+              time = Age[Gal[p].SnapNum] - (step + 0.5) * (deltaT / STEPS);
               deal_with_galaxy_merger(p, merger_centralgal, centralgal, time, deltaT / STEPS, halonr, step);
             }
-          } 
+          }
         }
-        
       }
+
     }
 
   } // Go on to the next STEPS substep
@@ -364,25 +379,25 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
   // Extra miscellaneous stuff before finishing this halo
 	Gal[centralgal].TotalSatelliteBaryons = 0.0;
   deltaT = Age[Gal[0].SnapNum] - Age[Halo[halonr].SnapNum];
-	
+
   for(p = 0; p < ngal; p++)
   {
 
-    // Don't bother with galaxies that have already merged 
+    // Don't bother with galaxies that have already merged
     if(Gal[p].mergeType > 0)
       continue;
-		
+
     Gal[p].Cooling /= deltaT;
     Gal[p].Heating /= deltaT;
-    Gal[p].OutflowRate /= deltaT;    
-		
+    Gal[p].OutflowRate /= deltaT;
+
     if(p != centralgal)
-			Gal[centralgal].TotalSatelliteBaryons += 
+			Gal[centralgal].TotalSatelliteBaryons +=
 				(Gal[p].StellarMass + Gal[p].BlackHoleMass + Gal[p].ColdGas + Gal[p].HotGas);
   }
 
 
-  // Attach final galaxy list to halo 
+  // Attach final galaxy list to halo
   offset = 0;
   for(p = 0, currenthalo = -1; p < ngal; p++)
   {
@@ -399,12 +414,12 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
     i = p-1;
     while(i >= 0)
     {
-     if(Gal[i].mergeType > 0) 
+     if(Gal[i].mergeType > 0)
        if(Gal[p].mergeIntoID > Gal[i].mergeIntoID)
          offset++;  // these galaxies won't be kept so offset mergeIntoID below
      i--;
     }
-    
+
     i = -1;
     if(Gal[p].mergeType > 0)
     {
@@ -416,14 +431,14 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
         else
           i--;
       }
-      
+
 			assert(i >= 0);
-      
+
       HaloGal[i].mergeType = Gal[p].mergeType;
       HaloGal[i].mergeIntoID = Gal[p].mergeIntoID - offset;
       HaloGal[i].mergeIntoSnapNum = Halo[currenthalo].SnapNum;
     }
-    
+
     if(Gal[p].mergeType == 0)
     {
 			assert(NumGals < MaxGals);
@@ -436,4 +451,3 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
 
 
 }
-

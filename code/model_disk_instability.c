@@ -25,7 +25,7 @@ void check_disk_instability(int p, int centralgal, int halonr, double time, doub
     Mcrit = Gal[p].Vmax * Gal[p].Vmax * (3.0 * Gal[p].DiskScaleRadius) / G;
     if(Mcrit > diskmass)
       Mcrit = diskmass;
-    
+
     // use disk mass here
     gas_fraction   = Gal[p].ColdGas / diskmass;
     unstable_gas   = gas_fraction * (diskmass - Mcrit);
@@ -40,11 +40,11 @@ void check_disk_instability(int p, int centralgal, int halonr, double time, doub
 
       Gal[p].BulgeMass += unstable_stars;
       Gal[p].MetalsBulgeMass += metallicity * unstable_stars;
-      
+
       // Need to fix this. Excluded for now.
       // Gal[p].mergeType = 3;  // mark as disk instability partial mass transfer
-      // Gal[p].mergeIntoID = NumGals + p - 1;      
-      
+      // Gal[p].mergeIntoID = NumGals + p - 1;
+
       if (Gal[p].BulgeMass / Gal[p].StellarMass > 1.0001 || Gal[p].MetalsBulgeMass / Gal[p].MetalsStellarMass > 1.0001)
 	    {
         printf("Instability: Mbulge > Mtot (stars or metals)\n");
@@ -63,8 +63,15 @@ void check_disk_instability(int p, int centralgal, int halonr, double time, doub
 
       unstable_gas_fraction = unstable_gas / Gal[p].ColdGas;
       if(AGNrecipeOn > 0)
+      {
+#ifdef WITH_QUASAR_LUM
+        // Gal[p].MergSnap = Gal[p].SnapNum;
+        printf("disk instability\t time = %e\t p = %d \t MergTimeInit = %e\t MergTime = %e\n", time, p, Gal[p].MergTimeInit, Gal[p].MergTime);
+        grow_black_hole(p, p, unstable_gas_fraction, time);
+#else
         grow_black_hole(p, unstable_gas_fraction);
-    
+#endif
+      }
       collisional_starburst_recipe(unstable_gas_fraction, p, centralgal, time, dt, halonr, 1, step);
     }
 

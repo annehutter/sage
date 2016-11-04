@@ -34,6 +34,9 @@ do {                                                                \
 #define  SEC_PER_MEGAYEAR   3.155e13
 #define  SEC_PER_YEAR       3.155e7
 
+#ifdef WITH_QUASAR_LUM
+#define  MERGER_NUM  10    // number of mergers that are stored for each galaxy
+#endif
 
 // This structure contains the properties that are output
 struct GALAXY_OUTPUT  
@@ -100,6 +103,19 @@ struct GALAXY_OUTPUT
   float infallMvir;
   float infallVvir;
   float infallVmax;
+  
+#ifdef WITH_QUASAR_LUM
+  // quasar luminosity parameters
+  float QSOBHaccrete[MERGER_NUM];
+  float QSOmergeAge[MERGER_NUM];
+  float QSOmergeTime[MERGER_NUM];
+  float SatBHaccrete[MERGER_NUM];
+  float SatMergeAge[MERGER_NUM];
+  float SatMergeTime[MERGER_NUM];
+  
+  int MergSnap;
+  int QSOmergSnap[MERGER_NUM];
+#endif
 };
 
 
@@ -158,6 +174,9 @@ struct GALAXY
   // misc 
   float DiskScaleRadius;
   float MergTime;
+#ifdef WITH_QUASAR_LUM
+  float MergTimeInit;
+#endif
   double Cooling;
   double Heating;
   float r_heat;
@@ -171,6 +190,19 @@ struct GALAXY
   float infallMvir;
   float infallVvir;
   float infallVmax;
+  
+#ifdef WITH_QUASAR_LUM
+  // quasar luminosity parameters
+  float QSOBHaccrete[MERGER_NUM];
+  float QSOmergeAge[MERGER_NUM];
+  float QSOmergeTime[MERGER_NUM];
+  float SatBHaccrete[MERGER_NUM];
+  float SatMergeAge[MERGER_NUM];
+  float SatMergeTime[MERGER_NUM];
+  
+  int MergSnap;
+  int QSOmergSnap[MERGER_NUM];
+#endif
 }
 *Gal, *HaloGal;
 

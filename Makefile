@@ -15,7 +15,9 @@ OBJS   = 	./code/main.o \
 			./code/model_disk_instability.o \
 			./code/model_reincorporation.o \
 			./code/model_mergers.o \
-			./code/model_misc.o
+			./code/model_misc.o \
+			./code/model_quasars.o
+
 
 INCL   =	./code/core_allvars.h  \
 			./code/core_proto.h  \
@@ -23,6 +25,12 @@ INCL   =	./code/core_allvars.h  \
 			./Makefile
 
 # USE-MPI = yes  # set this if you want to run in embarrassingly parallel
+
+WITH-QUASAR-LUM = yes
+
+ifdef WITH-QUASAR-LUM
+    OPT += -DWITH_QUASAR_LUM
+endif
 
 ifdef USE-MPI
     OPT += -DMPI  #  This creates an MPI version that can be used to process files in parallel
