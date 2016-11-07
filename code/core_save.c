@@ -216,10 +216,8 @@ void prepare_galaxy_for_output(int filenr, int tree, struct GALAXY *g, struct GA
         o->QSOBHaccrete[j] = g->QSOBHaccrete[j];
         o->QSOmergeAge[j] = g->QSOmergeAge[j];
         o->QSOmergeTime[j] = g->QSOmergeTime[j];
-        o->SatBHaccrete[j] = g->SatBHaccrete[j];
-        o->SatMergeAge[j] = g->SatMergeAge[j];
-        o->SatMergeTime[j] = g->SatMergeTime[j];
         o->QSOmergSnap[j] = g->QSOmergSnap[j];
+        o->QSOBH[j] = g->QSOBH[j];
     }
     o->MergSnap = g->MergSnap;
 #endif

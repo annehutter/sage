@@ -186,6 +186,7 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
             Gal[ngal].mergeIntoID = -1;
             Gal[ngal].MergTime = 999.9;
 
+            // Gal[ngal].deltaDiskScaleRadius = get_disk_radius(halonr, ngal) - Gal[ngal].DiskScaleRadius;
             Gal[ngal].DiskScaleRadius = get_disk_radius(halonr, ngal);
 
             Gal[ngal].Type = 0;

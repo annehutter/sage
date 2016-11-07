@@ -13,20 +13,22 @@
 void track_BHgrowth(int merger_centralgal, int p, double BHaccrete, double time)
 {
     int i,j;
-    float tmpQSOBHaccrete, tmpQSOmergeAge, tmpQSOmergeTime, tmpQSOmergeSnap;
+    float tmpQSOBHaccrete, tmpQSOmergeAge, tmpQSOmergeTime, tmpQSOmergeSnap, tmpQSOBH;
     int minQSOBHaccrete_index;
     float minQSOBHaccrete;
 
     printf("p = %d\ttime = %e\t Type = %d\tSnapNum = %d\tMergSnap = %d\n", p, time, Gal[p].Type, Gal[p].SnapNum, Gal[p].MergSnap);
 
     // if(Gal[p].SnapNum != Gal[p].MergSnap)
-    // {
+    if(Gal[p].Type != 0)
+    {
         tmpQSOmergeAge = time;
         tmpQSOmergeTime =  Gal[p].MergTimeInit - Gal[p].MergTime;
         if(tmpQSOmergeTime <= 0.)
             tmpQSOmergeTime = Gal[merger_centralgal].dT / STEPS;
         tmpQSOBHaccrete = BHaccrete;
         tmpQSOmergeSnap = Gal[p].MergSnap;
+        tmpQSOBH = Gal[merger_centralgal].BlackHoleMass;
 
         // find minimum
         minQSOBHaccrete = 1.e10;
@@ -45,6 +47,7 @@ void track_BHgrowth(int merger_centralgal, int p, double BHaccrete, double time)
         Gal[merger_centralgal].QSOmergeAge[minQSOBHaccrete_index] = tmpQSOmergeAge;
         Gal[merger_centralgal].QSOmergeTime[minQSOBHaccrete_index] = tmpQSOmergeTime;
         Gal[merger_centralgal].QSOmergSnap[minQSOBHaccrete_index] = tmpQSOmergeSnap;
+        Gal[merger_centralgal].QSOBH[minQSOBHaccrete_index] = tmpQSOBH;
 
         // sort array
         for(i = 0; i < MERGER_NUM; i++)
@@ -57,16 +60,19 @@ void track_BHgrowth(int merger_centralgal, int p, double BHaccrete, double time)
                     tmpQSOmergeAge = Gal[merger_centralgal].QSOmergeAge[i];
                     tmpQSOmergeTime = Gal[merger_centralgal].QSOmergeTime[i];
                     tmpQSOmergeSnap = Gal[merger_centralgal].QSOmergSnap[i];
+                    tmpQSOBH = Gal[merger_centralgal].QSOBH[i];
 
                     Gal[merger_centralgal].QSOBHaccrete[i] = Gal[merger_centralgal].QSOBHaccrete[j];
                     Gal[merger_centralgal].QSOmergeAge[i] = Gal[merger_centralgal].QSOmergeAge[j];
                     Gal[merger_centralgal].QSOmergeTime[i] = Gal[merger_centralgal].QSOmergeTime[j];
                     Gal[merger_centralgal].QSOmergSnap[i] = Gal[merger_centralgal].QSOmergSnap[j];
+                    Gal[merger_centralgal].QSOBH[i] = Gal[merger_centralgal].QSOBH[j];
 
                     Gal[merger_centralgal].QSOBHaccrete[j] = tmpQSOBHaccrete;
                     Gal[merger_centralgal].QSOmergeAge[j] = tmpQSOmergeAge;
                     Gal[merger_centralgal].QSOmergeTime[j] = tmpQSOmergeTime;
                     Gal[merger_centralgal].QSOmergSnap[j] = tmpQSOmergeSnap;
+                    Gal[merger_centralgal].QSOBH[j] = tmpQSOBH;
                 }
             }
         }
@@ -75,9 +81,12 @@ void track_BHgrowth(int merger_centralgal, int p, double BHaccrete, double time)
             printf("BHaccrete = %e\t", Gal[merger_centralgal].QSOBHaccrete[j]);
         printf("\n");
         for(j = 0; j < MERGER_NUM; j++)
+            printf("BH = %e\t", Gal[merger_centralgal].QSOBH[j]);
+        printf("\n");
+        for(j = 0; j < MERGER_NUM; j++)
             printf("mergeAge  = %e\t", Gal[merger_centralgal].QSOmergeTime[j]);
         printf("\n\n");
-    // }
+    }
 }
 
 #endif

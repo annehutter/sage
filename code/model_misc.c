@@ -92,10 +92,8 @@ void init_galaxy(int p, int halonr)
     Gal[p].QSOBHaccrete[j] = 0.0;
     Gal[p].QSOmergeAge[j] = 0.0;
     Gal[p].QSOmergeTime[j] = 0.0;
-    Gal[p].SatBHaccrete[j] = 0.0;
-    Gal[p].SatMergeAge[j] = 0.0;
-    Gal[p].SatMergeTime[j] = 0.0;
     Gal[p].QSOmergSnap[j] = 0;
+    Gal[p].QSOBH[j] = 0.;
   }
   Gal[p].MergSnap = 0;
 }
@@ -117,6 +115,29 @@ double get_disk_radius(int halonr, int p)
 	}
 	else
 		return 0.1 * Gal[p].Rvir;
+
+}
+
+
+
+double get_disk_radius_evolving(int halonr, double Mvir, double Rvir)
+{
+  double SpinMagnitude, SpinParameter;
+  double Vvir;
+
+  Vvir = get_virial_velocity_evolving(Mvir, Rvir);
+
+	if(Vvir > 0.0 && Rvir > 0.0)
+	{
+		// See Mo, Shude & White (1998) eq12, and using a Bullock style lambda.
+		SpinMagnitude = sqrt(Halo[halonr].Spin[0] * Halo[halonr].Spin[0] +
+			Halo[halonr].Spin[1] * Halo[halonr].Spin[1] + Halo[halonr].Spin[2] * Halo[halonr].Spin[2]);
+
+		SpinParameter = SpinMagnitude / (1.414 * Vvir * Rvir);
+		return (SpinParameter / 1.414) * Rvir;
+	}
+	else
+		return 0.1 * Rvir;
 
 }
 
@@ -175,6 +196,16 @@ double get_virial_velocity(int halonr)
 
 
 
+double get_virial_velocity_evolving(double Mvir, double Rvir)
+{
+  if(Rvir > 0.0)
+		return sqrt(G * Mvir / Rvir);
+	else
+		return 0.0;
+}
+
+
+
 double get_virial_radius(int halonr)
 {
   // return Halo[halonr].Rvir;  // Used for Bolshoi
@@ -190,4 +221,23 @@ double get_virial_radius(int halonr)
   fac = 1 / (200 * 4 * M_PI / 3.0 * rhocrit);
 
   return cbrt(get_virial_mass(halonr) * fac);
+}
+
+
+
+double get_virial_radius_evolving(int halonr, double Mvir)
+{
+  // return Halo[halonr].Rvir;  // Used for Bolshoi
+
+  double zplus1, hubble_of_z_sq, rhocrit, fac;
+
+  zplus1 = 1 + ZZ[Halo[halonr].SnapNum];
+  hubble_of_z_sq =
+    Hubble * Hubble *(Omega * zplus1 * zplus1 * zplus1 + (1 - Omega - OmegaLambda) * zplus1 * zplus1 +
+    OmegaLambda);
+
+  rhocrit = 3 * hubble_of_z_sq / (8 * M_PI * G);
+  fac = 1 / (200 * 4 * M_PI / 3.0 * rhocrit);
+
+  return cbrt(Mvir * fac);
 }

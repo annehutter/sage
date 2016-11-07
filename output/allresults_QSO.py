@@ -65,7 +65,7 @@ class Results:
           self.MaxTreeFiles = 8     # FilesPerSnapshot
           self.OmegaM = 0.25
           self.OmegaL = 0.75
-          self.z = 0.
+          self.z = 5.289
 
         elif whichsimulation == 1:  # Full Millennium
           self.Hubble_h = 0.73
@@ -136,9 +136,7 @@ class Results:
             ('QSOBHaccrete'                 , (np.float32, MERGER_NUM)),
             ('QSOmergeAge'                  , (np.float32, MERGER_NUM)),
             ('QSOmergeTime'                 , (np.float32, MERGER_NUM)),
-            ('SatBHaccrete'                 , (np.float32, MERGER_NUM)),
-            ('SatMergeAge'                  , (np.float32, MERGER_NUM)),
-            ('SatMergeTime'                 , (np.float32, MERGER_NUM)),
+            ('QSOBH'                        , (np.float32, MERGER_NUM)),
             ('MergSnap'                     , np.int32),
             ('QSOmergSnap'                  , (np.int32, MERGER_NUM))
             ]
@@ -1426,6 +1424,8 @@ class Results:
         Msun = 2.e33
         c = 3.e10
         yr = 365.*24.*3600.
+        km_cm = 1.e5
+        Mpc_cm = 3.086e24
 
         efficiency = 0.1
         gamma = 5./3.
@@ -1441,8 +1441,7 @@ class Results:
         w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccrete[:,0] > 0.))[0]
         if(len(w) > dilute): w = sample(w, dilute)
 
-        print len(w)
-
+        # MODEL 1 ---------------------------------------------------------------------
         rBondi = np.empty(len(w), dtype=np.float32)
         BHaccrete = np.empty(len(w), dtype=np.float64)
         mergeAge = np.empty(len(w))
@@ -1454,38 +1453,74 @@ class Results:
         cs = (gamma*R*Temp/mu)**0.5
         rBondi = Grav_const/cs**2*G.BlackHoleMass[w]*2.e33*1.e10
 
-        print G.BlackHoleMass[w]
         # Compute accretion time
-        tacc = rBondi/cs
-        print rBondi
-        print cs
-        print tacc
+        tacc = rBondi/cs*(self.Hubble_h*km_cm/Mpc_cm)
+
         # Compute Eddington luminosity
 
         for i in range(MERGER_NUM):
-            print i
-            BHaccrete = G.QSOBHaccrete[w,i]
+            BH = G.QSOBH[w,i] * 1.e10 / self.Hubble_h
+            BHaccrete = G.QSOBHaccrete[w,i] * 1.e10 / self.Hubble_h
             mergeAge = G.QSOmergeAge[w,i]
             mergeTime = G.QSOmergeTime[w,i]
 
-            print BHaccrete
-
-            time = mergeAge-(AgeUniverse-AgeRedshift)
-            time_factor = np.exp(-time/tacc)
-            time_factor2 = 1.#np.exp(time/5.e-5)
-            print time_factor
-
+            time = np.where(BHaccrete>0. ,mergeAge-(AgeUniverse-AgeRedshift), 0.)
+            time_factor = np.where(BHaccrete>0., np.exp(-time/tacc), 0.)
             luminosity = luminosity + BHaccrete*time_factor
-            luminosity2 = luminosity2 + BHaccrete*time_factor2
-            print luminosity
 
-        luminosity = efficiency*Msun/yr*c**2*luminosity
-        luminosity2 = efficiency*Msun/yr*c**2*luminosity2
+            print i
+            print "BH:", BH
+            print "BHaccrete:", BHaccrete
+            print "time:", time
+            print "tacc:", tacc
+            print "luminosity:", luminosity
 
+        luminosity = efficiency*Msun/yr*c**2*luminosity*1.e-7
+        # -----------------------------------------------------------------------------
+        # MODEL 2 ---------------------------------------------------------------------
+        tEdd = 0.45e9*yr*(self.Hubble_h*km_cm/Mpc_cm)
+
+        print "--------------------------------------------"
+        for i in range(MERGER_NUM):
+            BH = G.QSOBH[w,i] * 1.e10 / self.Hubble_h
+            BHaccrete = G.QSOBHaccrete[w,i] * 1.e10 / self.Hubble_h
+            mergeAge = G.QSOmergeAge[w,i]
+            mergeTime = G.QSOmergeTime[w,i]
+
+            time = np.where(BHaccrete>0. ,mergeAge-(AgeUniverse-AgeRedshift), 0.)
+            BHadd = np.where(BHaccrete>0. ,(BH+1.e2)/tEdd*(self.Hubble_h*km_cm/Mpc_cm)*yr*np.exp(time/tEdd*(1.-efficiency)/efficiency), 0.)
+            luminosity2 = luminosity2 + np.where(BHadd <= BHaccrete, BHadd, 0.)
+            print i
+            print "BH:", BH
+            print "BHaccrete:", BHaccrete
+            print "BHadd:", BHadd
+            print "luminosity:",luminosity2
+        luminosity2 = Msun/yr*c**2*luminosity2*1.e-7
+        # # -----------------------------------------------------------------------------
+        # # MODEL 3 ---------------------------------------------------------------------
+        # tEdd = 0.45e9*yr*(self.Hubble_h*km_cm/Mpc_cm)
+        #
+        # print "--------------------------------------------"
+        # for i in range(MERGER_NUM):
+        #     BH = G.QSOBH[w,i] * 1.e10 / self.Hubble_h
+        #     BHaccrete = G.QSOBHaccrete[w,i] * 1.e10 / self.Hubble_h
+        #     mergeAge = G.QSOmergeAge[w,i]
+        #     mergeTime = G.QSOmergeTime[w,i]
+        #
+        #     time = np.where(BHaccrete>0. ,mergeAge-(AgeUniverse-AgeRedshift), 0.)
+        #     BHadd = np.where(BHaccrete>0. ,(BH+1.e2)/tEdd*(self.Hubble_h*km_cm/Mpc_cm)*yr*np.exp(time/tEdd*(1.-efficiency)/efficiency), 0.)
+        #     luminosity2 = luminosity2 + np.where(BHadd <= BHaccrete, BHadd, 0.)
+        #     print i
+        #     print "BH:", BH
+        #     print "BHaccrete:", BHaccrete
+        #     print "BHadd:", BHadd
+        #     print "luminosity:",luminosity2
+        # luminosity2 = Msun/yr*c**2*luminosity2*1.e-7
+        # # -----------------------------------------------------------------------------
         ax = plt.subplot(111)  # 1 plot on the figure
 
         mi = 40
-        ma = 47#round(np.max(np.log10(luminosity)))
+        ma = 48#round(np.max(np.log10(luminosity)))
         binwidth = 0.25
         NB = (ma - mi) / binwidth
 
@@ -1497,7 +1532,7 @@ class Results:
 
         ax.set_yscale('log')
         print self.BoxSize/self.Hubble_h
-        plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='mergeTime')
+        plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='dynamic time')
         plt.step(xaxeshisto2, counts2 / binwidth / (self.BoxSize/self.Hubble_h)**3, 'r-', label='$10^{-4}$')
 
         plt.ylabel(r'$\mathrm{number}\ \mathrm{density}$    $[\mathrm{Mpc}^{-3}]$')  # Set the y...
@@ -1593,7 +1628,7 @@ if __name__ == '__main__':
         '-f',
         '--file_base',
         dest='FileName',
-        default='model_z0.000',
+        default='model_z5.289',
         help='filename base (default: model_z0.000)',
         metavar='FILE',
         )
@@ -1628,24 +1663,24 @@ if __name__ == '__main__':
     fin_base = opt.DirName + opt.FileName
     G = res.read_gals(fin_base, FirstFile, LastFile)
 
-    print G.SnapNum
-    #res.StellarMassFunction(G)
-    #res.BaryonicMassFunction(G)
-    #res.GasMassFunction(G)
-    #res.BaryonicTullyFisher(G)
-    #res.SpecificStarFormationRate(G)
-    #res.GasFraction(G)
-    #res.Metallicity(G)
-    #res.BlackHoleBulgeRelationship(G)
-    #res.QuiescentFraction(G)
-    #res.BulgeMassFraction(G)
-    #res.BaryonFraction(G)
-    #res.SpinDistribution(G)
-    #res.VelocityDistribution(G)
-    #res.MassReservoirScatter(G)
-    #res.SpatialDistribution(G)
-    res.QSOBHaccrete_distribution(G)
-    res.QSOBHaccrete_function(G)
-    res.QSO_distribution(G)
+    # print G.SnapNum
+    # res.StellarMassFunction(G)
+    # res.BaryonicMassFunction(G)
+    # res.GasMassFunction(G)
+    # res.BaryonicTullyFisher(G)
+    # res.SpecificStarFormationRate(G)
+    # res.GasFraction(G)
+    # res.Metallicity(G)
+    # res.BlackHoleBulgeRelationship(G)
+    # res.QuiescentFraction(G)
+    # res.BulgeMassFraction(G)
+    # res.BaryonFraction(G)
+    # res.SpinDistribution(G)
+    # res.VelocityDistribution(G)
+    # res.MassReservoirScatter(G)
+    # res.SpatialDistribution(G)
+    # res.QSOBHaccrete_distribution(G)
+    # res.QSOBHaccrete_function(G)
+    # res.QSO_distribution(G)
     res.QSOluminosity_function(G)
-    res.check_merger_snapnum(G)
+    # res.check_merger_snapnum(G)

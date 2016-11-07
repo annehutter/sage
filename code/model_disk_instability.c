@@ -13,9 +13,18 @@ void check_disk_instability(int p, int centralgal, int halonr, double time, doub
 {
   double Mcrit, gas_fraction, unstable_gas, unstable_gas_fraction, unstable_stars, diskmass, metallicity;
   double star_fraction;
+  // double currentMvir, currentRvir, currentDiskScaleRadius;
 
   // Here we calculate the stability of the stellar and gaseous disk as discussed in Mo, Mao & White (1998).
   // For unstable stars and gas, we transfer the required ammount to the bulge to make the disk stable again
+
+
+  // currentMvir = Gal[p].Mvir - Gal[p].deltaMvir * (1.0 - ((double)step + 1.0) / (double)STEPS);
+  // if(currentMvir <= 0.)
+  //   currentMvir = Gal[p].Mvir - Gal[p].deltaMvir * (1.0 - ((double)step + 0.0) / (double)STEPS);
+  // currentRvir =  get_virial_radius_evolving(halonr, currentMvir);
+  // currentDiskScaleRadius = get_disk_radius_evolving(halonr, currentMvir, currentRvir);
+
 
   // Disk mass has to be > 0.0
   diskmass = Gal[p].ColdGas + (Gal[p].StellarMass - Gal[p].BulgeMass);
@@ -23,6 +32,10 @@ void check_disk_instability(int p, int centralgal, int halonr, double time, doub
   {
     // calculate critical disk mass
     Mcrit = Gal[p].Vmax * Gal[p].Vmax * (3.0 * Gal[p].DiskScaleRadius) / G;
+    // Mcrit = Gal[p].Vvir * Gal[p].Vvir * (3.0 * Gal[p].DiskScaleRadius) / G;
+    // printf("Mvr = %e\tVmax = %e\tdm = %e\tMcrit_old = %e\t", currentMvir, Gal[p].Vmax, diskmass, Mcrit);
+    // Mcrit = Gal[p].Vmax * Gal[p].Vmax * (3.0 * currentDiskScaleRadius) / G;
+    // printf("Mcrit_new = %e\n", Mcrit);
     if(Mcrit > diskmass)
       Mcrit = diskmass;
 

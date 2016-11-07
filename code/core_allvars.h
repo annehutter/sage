@@ -108,9 +108,7 @@ struct GALAXY_OUTPUT
   float QSOBHaccrete[MERGER_NUM];
   float QSOmergeAge[MERGER_NUM];
   float QSOmergeTime[MERGER_NUM];
-  float SatBHaccrete[MERGER_NUM];
-  float SatMergeAge[MERGER_NUM];
-  float SatMergeTime[MERGER_NUM];
+  float QSOBH[MERGER_NUM];
 
   int MergSnap;
   int QSOmergSnap[MERGER_NUM];
@@ -171,6 +169,7 @@ struct GALAXY
 
   // misc
   float DiskScaleRadius;
+  // float deltaDiskScaleRadius;
   float MergTime;
   float MergTimeInit;
   double Cooling;
@@ -191,9 +190,7 @@ struct GALAXY
   float QSOBHaccrete[MERGER_NUM];
   float QSOmergeAge[MERGER_NUM];
   float QSOmergeTime[MERGER_NUM];
-  float SatBHaccrete[MERGER_NUM];
-  float SatMergeAge[MERGER_NUM];
-  float SatMergeTime[MERGER_NUM];
+  float QSOBH[MERGER_NUM];
 
   int MergSnap;
   int QSOmergSnap[MERGER_NUM];

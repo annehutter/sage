@@ -56,9 +56,12 @@ void quasar_mode_wind(int gal, float BHaccrete);
 
 double get_metallicity(double gas, double metals);
 double get_virial_velocity(int halonr);
+double get_virial_velocity_evolving(double Mvir, double Rvir);
 double get_virial_radius(int halonr);
+double get_virial_radius_evolving(int halonr, double Mvir);
 double get_virial_mass(int halonr);
 double get_disk_radius(int halonr, int p);
+double get_disk_radius_evolving(int halonr, double Mvir, double Rvir);
 
 void read_output_snaps(void);
 void read_snap_list(void);
