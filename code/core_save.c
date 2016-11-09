@@ -210,8 +210,7 @@ void prepare_galaxy_for_output(int filenr, int tree, struct GALAXY *g, struct GA
     o->infallVmax = 0.0;
   }
 
-#ifdef WITH_QSO
-    for (j = 0; j < MERGER_NUM; j++)
+  for (j = 0; j < MERGER_NUM; j++)
     {
         o->QSOBHaccrete[j] = g->QSOBHaccrete[j];
         o->QSOmergeAge[j] = g->QSOmergeAge[j];
@@ -220,7 +219,7 @@ void prepare_galaxy_for_output(int filenr, int tree, struct GALAXY *g, struct GA
         o->QSOBH[j] = g->QSOBH[j];
     }
     o->MergSnap = g->MergSnap;
-#endif
+    o->MergNum = g->MergNum;
 }
 
 

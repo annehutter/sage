@@ -65,9 +65,11 @@ void deal_with_galaxy_merger(int p, int merger_centralgal, int centralgal, doubl
   // grow black hole through accretion from cold disk during mergers, a la Kauffmann & Haehnelt (2000)
   if(AGNrecipeOn)
   {
-    if(TrackBHgrowthOn == 1)
+    if(TrackBHgrowthOn != 0)
     {
+#ifdef DEBUG
       printf("deal with galaxy merger\t%d: mergTime = %e\t mergTimeInit = %e\t dt = %e\n", p, Gal[p].MergTime, Gal[p].MergTimeInit, dt*(step+1));
+#endif
       grow_black_hole_trackBHgrowth(merger_centralgal, p, mass_ratio, time);
     }else{
       grow_black_hole(merger_centralgal, mass_ratio);

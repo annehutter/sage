@@ -96,6 +96,7 @@ void init_galaxy(int p, int halonr)
     Gal[p].QSOBH[j] = 0.;
   }
   Gal[p].MergSnap = 0;
+  Gal[p].MergNum = 0;
 }
 
 

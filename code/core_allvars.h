@@ -34,9 +34,7 @@ do {                                                                \
 #define  SEC_PER_MEGAYEAR   3.155e13
 #define  SEC_PER_YEAR       3.155e7
 
-#ifdef WITH_QSO
 #define  MERGER_NUM  10    // number of mergers that are stored for each galaxy
-#endif
 
 // This structure contains the properties that are output
 struct GALAXY_OUTPUT
@@ -112,6 +110,7 @@ struct GALAXY_OUTPUT
 
   int MergSnap;
   int QSOmergSnap[MERGER_NUM];
+  int MergNum;
 };
 
 
@@ -194,6 +193,7 @@ struct GALAXY
 
   int MergSnap;
   int QSOmergSnap[MERGER_NUM];
+  int MergNum;
 }
 *Gal, *HaloGal;
 

@@ -208,7 +208,7 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
             {
               // here the galaxy has gone from type 1 to type 2 or otherwise doesn't have a merging time.
               Gal[ngal].MergTime = estimate_merging_time(halonr, Halo[halonr].FirstHaloInFOFgroup, ngal);
-              if(TrackBHgrowthOn == 1)
+              if(TrackBHgrowthOn != 0)
               {
                 Gal[ngal].MergTimeInit = Gal[ngal].MergTime;
                 Gal[ngal].MergSnap = Gal[ngal].SnapNum;
@@ -228,7 +228,7 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
             // here the galaxy has gone from type 0 to type 2 - merge it!
             Gal[ngal].MergTime = 0.0;
 
-            if(TrackBHgrowthOn == 1)
+            if(TrackBHgrowthOn != 0)
             {
               Gal[ngal].MergTimeInit = 0.0;
               Gal[ngal].MergSnap = Gal[ngal].SnapNum;
@@ -281,7 +281,9 @@ int join_galaxies_of_progenitors(int halonr, int ngalstart)
 
 void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the FOF-background subhalo (i.e. main halo)
 {
+#ifdef DEBUG
     printf("halonr = %d\tngal = %d\t tree=%d\n", halonr, ngal, tree);
+#endif
   int p, i, step, centralgal, merger_centralgal, currenthalo, offset;
   double infallingGas, coolingGas, deltaT, time, galaxyBaryons, currentMvir;
 
@@ -352,8 +354,9 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
 
           Gal[p].mergeIntoID = NumGals + merger_centralgal;  // position in output
 
+#ifdef DEBUG
           printf("merger_central = %d\t mergeIntoID = %d\n", merger_centralgal, Gal[p].mergeIntoID);
-
+#endif
           if(Gal[p].MergTime > 0.0)  // disruption has occured!
           {
             disrupt_satellite_to_ICS(merger_centralgal, p);

@@ -77,9 +77,11 @@ void check_disk_instability(int p, int centralgal, int halonr, double time, doub
       unstable_gas_fraction = unstable_gas / Gal[p].ColdGas;
       if(AGNrecipeOn > 0)
       {
-        if(TrackBHgrowthOn == 1)
+        if(TrackBHgrowthOn != 0)
         {        // Gal[p].MergSnap = Gal[p].SnapNum;
+#ifdef DEBUG
           printf("disk instability\t time = %e\t p = %d \t MergTimeInit = %e\t MergTime = %e\n", time, p, Gal[p].MergTimeInit, Gal[p].MergTime);
+#endif
           grow_black_hole_trackBHgrowth(p, p, unstable_gas_fraction, time);
         }else{
           grow_black_hole(p, unstable_gas_fraction);

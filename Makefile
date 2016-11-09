@@ -26,11 +26,7 @@ INCL   =	./code/core_allvars.h  \
 
 # USE-MPI = yes  # set this if you want to run in embarrassingly parallel
 
-WITH-QUASAR-LUM = yes
-
-ifdef WITH-QUASAR-LUM
-    OPT += -DWITH_QSO
-endif
+#OPT += -DDEBUG
 
 ifdef USE-MPI
     OPT += -DMPI  #  This creates an MPI version that can be used to process files in parallel
