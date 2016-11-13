@@ -251,7 +251,7 @@ class Results:
             print i
             print G.QSOBHaccrete[w,i]
             t = i*np.ones(len(G.QSOBHaccrete[w,i]))/MERGER_NUM
-            thisPlot = plt.scatter(np.log10(G.Mvir[w]), np.log10(G.QSOBHaccrete[w,i]), marker='o', s=20., c=t, cmap = cm.jet_r, alpha=0.8, label='Stars')
+            thisPlot = plt.scatter(np.log10(G.Mvir[w]*1.e10), np.log10(G.QSOBHaccrete[w,i]*1.e10), marker='o', s=20., c=t, cmap = cm.jet_r, alpha=0.8, label='Stars')
             thisPlot.set_clim(vmin=0,vmax=1)
 
         plt.ylabel(r'$\log \dot{M_{BH}}$    $[\mathrm{M}_{\odot} \mathrm{yr}^{-1}]$')  # Set the y...
@@ -282,7 +282,7 @@ class Results:
         BHaccrete = np.zeros(len(w))
 
         for i in range(MERGER_NUM):
-            BHaccrete = BHaccrete+G.QSOBHaccrete[w,i]
+            BHaccrete = BHaccrete+G.QSOBHaccrete[w,i]*1.e10
 
         print len(BHaccrete)
 
@@ -594,9 +594,9 @@ class Results:
 
 # --------------------------------------------------------
 
-    def QSOnumMergers_redshift(self, G):
+    def BHaccretion_time(self, G):
 
-        print 'Plotting the QSO luminosity distribution of all galaxies'
+        print 'Plotting the accretion onto BH over time for all galaxies'
 
         seed(2222)
 
@@ -610,27 +610,77 @@ class Results:
 
         plt.figure()
         ax = plt.subplot(111)  # 1 plot on the figure
-        #
-        # for i in range(MERGER_NUM):
-        #     w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccrete[:,i] > 0.))[0]
-        #     if(len(w) > dilute): w = sample(w, dilute)
-        #
-        #     time = AgeUniverse - G.QSOmergeAge[w,i]
-        #     redshift = (self.OmegaL/self.OmegaM/(np.sinh(1.5*self.OmegaL**0.5*H*time))**2)**(1./3.)-1.
-        #
-        #     t = i*np.ones(len(G.QSOBHaccrete[w,i]))/MERGER_NUM
-        #     thisPlot = plt.scatter(redshift, G.MergNum[w], marker='o', s=10., c=t, cmap = cm.jet_r, alpha=0.8, label='Stars')
-        #     thisPlot.set_clim(vmin=0,vmax=1)
 
-        w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.))[0]
-        if(len(w) > dilute): w = sample(w, dilute)
-        plt.scatter(np.log10(G.BlackHoleMass[w]), G.MergNum[w], marker='o', s=10., alpha=0.8, label='Stars')
-        plt.axis([-10, 0, 0., 50])
-        # ax.set_xscale('log')
-        plt.ylabel(r'$\mathrm{snapshot\ when\ estimate\ merge\ time}$')  # Set the y...
+        BH = np.empty(0)
+        BHaccrete = np.empty(0)
+        redshiftmerger = np.empty(0)
+
+        for i in range(MERGER_NUM):
+            w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccrete[:,i] > 0.))[0]
+            if(len(w) > dilute): w = sample(w, dilute)
+
+            time = AgeUniverse - G.QSOmergeAge[w,i]
+            redshift = (self.OmegaL/self.OmegaM/(np.sinh(1.5*self.OmegaL**0.5*H*time))**2)**(1./3.)-1.
+
+            BH = np.append(BH, G.BlackHoleMass[w])
+            BHaccrete = np.append(BHaccrete, G.QSOBHaccrete[w,i])
+            redshiftmerger = np.append(redshiftmerger, redshift)
+
+        BH_index = np.int32((np.log10(BH) - np.log10(np.min(BH))) * 2)#/ (round(np.log10(np.min(BH))) - round(np.log10(np.max(BH))))
+        redshift_index = np.int32((redshiftmerger - round(G.z)) * 2)
+
+        BH_index_max = np.max(BH_index) + 1
+        redshift_index_max = np.max(redshift_index) + 1
+        redshift_plot = np.arange(redshift_index_max)*0.5 + round(G.z)
+
+        hist_median = np.zeros((redshift_index_max, BH_index_max))
+        hist_mean = np.zeros((redshift_index_max, BH_index_max))
+        hist_std = np.zeros((redshift_index_max, BH_index_max))
+        hist_25 = np.zeros((redshift_index_max, BH_index_max))
+        hist_75 = np.zeros((redshift_index_max, BH_index_max))
+
+        cmap = plt.get_cmap('jet_r')
+        colors = [cmap(i) for i in np.linspace(0, 1, 6)]
+        print colors
+
+        for i in range(BH_index_max):
+            w = np.where(BH_index == i)
+            for j in range(redshift_index_max):
+                v = np.where((BH_index == i) & (redshift_index == j))[0]
+                if(len(v)>0):
+                    hist_median[j,i] = np.median(BHaccrete[v]/BH[v])
+                    hist_mean[j,i] = np.mean(BHaccrete[v]/BH[v])
+                    hist_std[j,i] = np.std(BHaccrete[v]/BH[v])
+                    hist_25[j,i] = np.percentile(BHaccrete[v]/BH[v],25)
+                    hist_75[j,i] = np.percentile(BHaccrete[v]/BH[v],75)
+                else:
+                    hist_std[j,i] = 1.e-4
+                    hist_25[j,i] = 1.e-4
+                    hist_75[j,i] = 1.e-4
+
+            if(i > 8 and i < 15):
+                k = i*0.5 + np.log10(np.min(BH))+10.
+                plt.plot(redshift_plot, hist_median[:,i], c=colors[i-9],  label='$M=10^{k}$'.format(k=k))
+                ax.fill_between(redshift_plot, hist_25[:,i], hist_75[:,i], alpha=0.1, facecolor=colors[i-9])
+
+        # redshift_bins = np.linspace(round(G.z), 12., num = (12-round(G.z))*2+1)
+        # BHaccrete_bins = 10.**np.linspace(-4.,0., num = 17)
+        #
+        # hist, xbins, ybins = np.histogram2d(redshiftmerger, BH, bins=(redshift_bins, BHaccrete_bins))
+        #
+        # print len(BH)
+        # print len(BHaccrete)
+        # print len(redshiftmerger)
+        #
+        # ax.pcolormesh(xbins, ybins, hist.T)
+
+        plt.axis([G.z, 12, 0.01, 1.])
+        ax.set_yscale('log')
+        plt.ylabel(r'$\Delta\mathrm{M_{BH,Q}} / \mathrm{M_{BH}}$')  # Set the y...
         plt.xlabel(r'$z_{\mathrm{merge}}$')  # and the x-axis labels
+        plt.legend(loc='best')
 
-        outputFile = OutputDir + '21.QSOnumMergers_redshift' + OutputFormat
+        outputFile = OutputDir + '21.BHaccretion_time' + OutputFormat
         plt.savefig(outputFile)  # Save the figure
         print 'Saved file to', outputFile
         plt.close()
@@ -706,4 +756,4 @@ if __name__ == '__main__':
     res.QSO_distribution(G)
     res.QSOluminosity_function(G)
     res.check_merger_snapnum(G)
-    res.QSOnumMergers_redshift(G)
+    res.BHaccretion_time(G)
