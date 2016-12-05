@@ -28,6 +28,7 @@ do {                                                                \
 #define  C           2.9979e10
 #define  PLANCK      6.6262e-27
 #define  CM_PER_MPC  3.085678e24
+#define  CM_PER_KM   1.e5
 #define  PROTONMASS  1.6726e-24
 #define  HUBBLE      3.2407789e-18   /* in h/sec */
 
@@ -35,6 +36,7 @@ do {                                                                \
 #define  SEC_PER_YEAR       3.155e7
 
 #define  MERGER_NUM  10    // number of mergers that are stored for each galaxy
+#define  TEDD_YR     4.5e9
 
 // This structure contains the properties that are output
 struct GALAXY_OUTPUT
@@ -111,6 +113,14 @@ struct GALAXY_OUTPUT
   int MergSnap;
   int QSOmergSnap[MERGER_NUM];
   int MergNum;
+  int QSOmergeType[MERGER_NUM];
+  //
+  // int hasJustMerged;
+  // double rad_efficiency;
+  float QSOBHaccretionRate;
+  float QSOBHaccretionMass;
+  float QSOLuminosity;
+  float ColdGasToAccrete;
 };
 
 
@@ -194,6 +204,15 @@ struct GALAXY
   int MergSnap;
   int QSOmergSnap[MERGER_NUM];
   int MergNum;
+  int QSOmergeType[MERGER_NUM];
+
+  // quasar accretion model
+  int hasJustMerged;
+  double rad_efficiency;
+  float QSOBHaccretionRate;
+  float QSOBHaccretionMass;
+  float QSOLuminosity;
+  float ColdGasToAccrete;
 }
 *Gal, *HaloGal;
 
@@ -255,6 +274,7 @@ extern int    DiskInstabilityOn;
 extern int    AGNrecipeOn;
 extern int    SFprescription;
 extern int    TrackBHgrowthOn;
+extern int    ContinuousAccretionOn;
 
 // recipe parameters
 extern double RecycleFraction;

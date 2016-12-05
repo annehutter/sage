@@ -63,11 +63,12 @@ class Results:
 
         if whichsimulation == 0:    # Mini-Millennium
           self.Hubble_h = 0.73
-          self.BoxSize = 157.5#62.5       # Mpc/h
+          self.BoxSize = 62.5       # Mpc/h
           self.MaxTreeFiles = 8     # FilesPerSnapshot
           self.OmegaM = 0.25
           self.OmegaL = 0.75
-          self.z = 0.
+          self.z = 6.197
+          self.aList = "../input/treefiles/millennium/millennium.a_list"
 
         elif whichsimulation == 1:  # Full Millennium
           self.Hubble_h = 0.73
@@ -75,7 +76,17 @@ class Results:
           self.MaxTreeFiles = 512   # FilesPerSnapshot
           self.OmegaM = 0.25
           self.OmegaL = 0.75
-          self.z = 0.
+          self.z = 6.197
+          self.aList = "/lustre/projects/p014_swin/raw_data/millennium/full/millennium.a_list"
+
+        elif whichsimulation == 2:  # Full Bolshoi
+          self.Hubble_h = 0.7
+          self.BoxSize = 250        # Mpc/h
+          self.MaxTreeFiles = 125  # FilesPerSnapshot
+          self.OmegaM = 0.27
+          self.OmegaL = 0.73
+          self.z = 6.197
+          self.aList = "/lustre/projects/p004_swin/msinha/tao/data_products/input/bolshoi-planck/lhalotree/run1/bolshoi-planck.a_list"
 
         else:
           print "Please pick a valid simulation!"
@@ -141,7 +152,12 @@ class Results:
             ('QSOBH'                        , (np.float32, MERGER_NUM)),
             ('MergSnap'                     , np.int32),
             ('QSOmergSnap'                  , (np.int32, MERGER_NUM)),
-            ('MergNum'                      , np.int32)
+            ('MergNum'                      , np.int32),
+            ('QSOmergeType'                 , (np.int32, MERGER_NUM)),
+            ('QSOBHaccretionRate'           , np.float32),
+            ('QSOBHaccretionMass'           , np.float32),
+            ('QSOLuminosity'                , np.float32),
+            ('ColdGasToAccrete'             , np.float32)
             ]
         names = [Galdesc_full[i][0] for i in xrange(len(Galdesc_full))]
         formats = [Galdesc_full[i][1] for i in xrange(len(Galdesc_full))]
@@ -225,7 +241,6 @@ class Results:
 
         w = np.where(G.StellarMass > 1.0)[0]
         print "Galaxies more massive than 10^10Msun/h:", len(w)
-
         print
 
         # Calculate the volume given the first_file and last_file
@@ -245,19 +260,17 @@ class Results:
         plt.figure()
         ax = plt.subplot(111)  # 1 plot on the figure
 
-        for i in range(MERGER_NUM):
-            w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccrete[:,i] > 0.))[0]
-            if(len(w) > dilute): w = sample(w, dilute)
-            print i
-            print G.QSOBHaccrete[w,i]
-            t = i*np.ones(len(G.QSOBHaccrete[w,i]))/MERGER_NUM
-            thisPlot = plt.scatter(np.log10(G.Mvir[w]*1.e10), np.log10(G.QSOBHaccrete[w,i]*1.e10), marker='o', s=20., c=t, cmap = cm.jet_r, alpha=0.8, label='Stars')
-            thisPlot.set_clim(vmin=0,vmax=1)
+        w = np.where((G.Mvir  > 0.0) & (G.StellarMass > 0.))[0]
+        if(len(w) > dilute): w = sample(w, dilute)
 
-        plt.ylabel(r'$\log \dot{M_{BH}}$    $[\mathrm{M}_{\odot} \mathrm{yr}^{-1}]$')  # Set the y...
+        print G.QSOBHaccretionRate[w]
+        thisPlot = plt.scatter(np.log10(G.Mvir[w] / self.Hubble_h * 1.e10), np.log10(G.QSOBHaccretionRate[w] / self.Hubble_h), marker='o', s=20., alpha=0.8, label='Stars')
+        thisPlot.set_clim(vmin=0,vmax=1)
+
+        plt.ylabel(r'$\log \dot{M_{BH}}$    $[\mathrm{M}_{\odot}]$')  # Set the y...
         plt.xlabel(r'$\log M_{vir}$    $[\mathrm{M}_{\odot}]$')  # and the x-axis labels
 
-        outputFile = OutputDir + '16.QSOBHaccreteDistribution' + OutputFormat
+        outputFile = OutputDir + '16.QSOBHaccreteDistribution_z' + str(G.z) + OutputFormat
         plt.savefig(outputFile)  # Save the figure
         print 'Saved file to', outputFile
         plt.close()
@@ -276,15 +289,12 @@ class Results:
         plt.figure()
 
 
-        w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccrete[:,0] > 0.))[0]
+        w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccretionRate > 0.))[0]
         if(len(w) > dilute): w = sample(w, dilute)
 
         BHaccrete = np.zeros(len(w))
 
-        for i in range(MERGER_NUM):
-            BHaccrete = BHaccrete+G.QSOBHaccrete[w,i]*1.e10
-
-        print len(BHaccrete)
+        BHaccrete = BHaccrete + G.QSOBHaccretionRate[w] / self.Hubble_h
 
         ax = plt.subplot(111)  # 1 plot on the figure
 
@@ -294,7 +304,6 @@ class Results:
         binwidth = 0.25
         NB = (ma - mi) / binwidth
 
-        print BHaccrete
         (counts, binedges) = np.histogram(np.log10(BHaccrete), range=(mi, ma), bins=NB)
         xaxeshisto = binedges[:-1] + 0.5 * binwidth
 
@@ -302,47 +311,9 @@ class Results:
         plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='los-velocity')
 
         plt.ylabel(r'$\mathrm{number}\ \mathrm{density}$    $[\mathrm{Mpc}^{-3}]$')  # Set the y...
-        plt.xlabel(r'$\log \dot{M_{BH}}$    $[\mathrm{M}_{\odot} \mathrm{yr}^{-1}]$')  # and the x-axis labels
+        plt.xlabel(r'$\log \Delta M_{BH}$    $[\mathrm{M}_{\odot}]$')  # and the x-axis labels
 
-        outputFile = OutputDir + '17.QSOBHaccreteFunction' + OutputFormat
-        plt.savefig(outputFile)  # Save the figure
-        print 'Saved file to', outputFile
-        plt.close()
-
-        # Add this plot to our output list
-        OutputList.append(outputFile)
-
-# --------------------------------------------------------
-
-    def QSO_distribution(self, G):
-
-        print 'Plotting the QSO distribution of all galaxies'
-
-        seed(2222)
-
-        plt.figure()
-        ax = plt.subplot(111)  # 1 plot on the figure
-
-        for i in range(MERGER_NUM):
-            w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccrete[:,i] > 0.))[0]
-            if(len(w) > dilute): w = sample(w, dilute)
-
-            H = 100.#(self.Hubble_h*1.e7/3.086e24)
-
-            AgeUniverse = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM)**0.5)
-            time = AgeUniverse - G.QSOmergeAge[w,i]
-            redshift = (self.OmegaL/self.OmegaM/(np.sinh(1.5*self.OmegaL**0.5*H*time))**2)**(1./3.)-1.
-
-            t = i*np.ones(len(G.QSOBHaccrete[w,i]))/MERGER_NUM
-            thisPlot = plt.scatter(redshift, np.log10(G.QSOBHaccrete[w,i]/G.QSOBHaccrete[w,0]), marker='o', s=10., c=t, cmap = cm.jet_r, alpha=0.8, label='Stars')
-            thisPlot.set_clim(vmin=0,vmax=1)
-
-        # ax.set_xscale('log')
-        plt.axis([G.z, 10.0, -6., 0.5])
-        plt.ylabel(r'$\log \dot{M}_{BH}^{(i)} / \dot{M}_{BH}^{(0)}$')  # Set the y...
-        plt.xlabel(r'$z$')  # and the x-axis labels
-
-        outputFile = OutputDir + '18.QSODistribution' + OutputFormat
+        outputFile = OutputDir + '17.QSOBHaccreteFunction_z' + str(G.z) + OutputFormat
         plt.savefig(outputFile)  # Save the figure
         print 'Saved file to', outputFile
         plt.close()
@@ -362,6 +333,7 @@ class Results:
         c = 3.e10
         yr = 365.*24.*3600.
         km_cm = 1.e5
+        pc_cm = 3.086e18
         Mpc_cm = 3.086e24
         Lsol = 3.9e33
 
@@ -374,107 +346,26 @@ class Results:
         AgeRedshift = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM/(1.+G.z)**3)**0.5)
         AgeUniverse = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM)**0.5)
 
-        print AgeRedshift, AgeUniverse
-
         plt.figure()
 
-        w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccrete[:,0] > 0.))[0]
+        w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccretionRate > 0.))[0]
         if(len(w) > dilute): w = sample(w, dilute)
 
-        # MODEL 1 ---------------------------------------------------------------------
-        rBondi = np.empty(len(w), dtype=np.float32)
-        BHaccrete = np.empty(len(w), dtype=np.float64)
-        mergeAge = np.empty(len(w))
-        mergeTime = np.empty(len(w))
-        luminosity = np.zeros(len(w), dtype=np.float64)
-
-        # Compute Bondi radius
-        cs = (gamma*R*Temp/mu)**0.5
-        rBondi = Grav_const/cs**2*G.BlackHoleMass[w]*2.e33*1.e10
-
-        # Compute accretion time
-        tacc = 1.*rBondi/cs*(self.Hubble_h*km_cm/Mpc_cm)
-        # tacc = 0.01*G.Rvir[w]*3.086e24/(G.Vvir[w]*1.e3)*(self.Hubble_h*km_cm/Mpc_cm)
-        # Compute Eddington luminosity
-
-        for i in range(MERGER_NUM):
-            BH = np.float64(G.QSOBH[w,i] * 1.e10 / self.Hubble_h)
-            BHaccrete = np.float64(G.QSOBHaccrete[w,i] * 1.e10 / self.Hubble_h)
-            mergeAge = np.float64(G.QSOmergeAge[w,i])
-            mergeTime = G.QSOmergeTime[w,i]
-
-            time = np.where(BHaccrete>0. , mergeAge-(AgeUniverse-AgeRedshift), 0.)
-            time_factor = np.where(BHaccrete>0., np.exp(-time/tacc), 0.)
-            luminosity = luminosity + BHaccrete*time_factor
-
-            print time[0], AgeUniverse, AgeRedshift, mergeAge[0], mergeAge[1], mergeAge[2]
-        luminosity = efficiency*Msun/yr*c**2*luminosity*1.e-7
-        # -----------------------------------------------------------------------------
-        # MODEL 2 ---------------------------------------------------------------------
-        luminosity2 = np.zeros(len(w), dtype=np.float64)
-
-        tEdd = 0.45e9*yr*(self.Hubble_h*km_cm/Mpc_cm)
-        tEdd_yr = 0.45e9
-
-        print "--------------------------------------------"
-        for i in range(MERGER_NUM):
-            BH = np.float64(G.QSOBH[w,i] * 1.e10 / self.Hubble_h)
-            BHaccrete = np.float64(G.QSOBHaccrete[w,i] * 1.e10 / self.Hubble_h)
-            mergeAge = np.float64(G.QSOmergeAge[w,i])
-            mergeTime = G.QSOmergeTime[w,i]
-
-            print AgeRedshift
-            time = np.where(BHaccrete>0. , mergeAge-(AgeUniverse-AgeRedshift), 0.)
-            # if(i==0):
-            #     for j in range(len(w)):
-            #         print np.log10(BH[j]), np.log10(BHaccrete[j]), np.log10(time[j]), np.log10(mergeAge[j]), np.log10(AgeRedshift), G.z
-            BHadd = np.where(BHaccrete>0. ,(BH+1.e2)/tEdd_yr*np.exp(time/tEdd*(1.-efficiency)/efficiency), 0.)
-            luminosity2 = luminosity2 + np.where(BHadd <= BHaccrete, BHadd, 0.)
-
-        luminosity2 = Msun/yr*c**2*luminosity2*1.e-7
-        # -----------------------------------------------------------------------------
-        # MODEL 3 ---------------------------------------------------------------------
-        luminosity3 = np.zeros(len(w), dtype = np.float64)
-        F = 0.1
-        tEdd = 0.45e9*yr*(self.Hubble_h*km_cm/Mpc_cm)
-
-        print "--------------------------------------------"
-        for i in range(MERGER_NUM):
-            BH = np.float64(G.QSOBH[w,i] * 1.e10 / self.Hubble_h)
-            BHaccrete = np.float64(G.QSOBHaccrete[w,i] * 1.e10 / self.Hubble_h)
-            mergeAge = np.float64(G.QSOmergeAge[w,i])
-            mergeTime = G.QSOmergeTime[w,i]
-
-            BHpeak = BH + F * BHaccrete * (1. - efficiency)
-            Lpeak = 3.3e4*Lsol * BHpeak
-            alpha = -0.95 + 0.32 * np.log10(Lpeak / (1.e12*Lsol))
-
-            time = np.where(BHaccrete>0. ,(mergeAge-(AgeUniverse-AgeRedshift)) / (yr*(self.Hubble_h*km_cm/Mpc_cm)), 0.)
-            lum = Lpeak * ( 1. + time/1.e9 * (Lpeak / (1.e9*Lsol))**-alpha  )**(1./alpha)
-
-            luminosity3 = luminosity3 + lum
+        print np.log10(G.QSOLuminosity[w])
 
         # -----------------------------------------------------------------------------
         ax = plt.subplot(111)  # 1 plot on the figure
 
         mi = 43
         ma = 48#round(np.max(np.log10(luminosity)))
-        binwidth = 0.125
+        binwidth = 0.25
         NB = (ma - mi) / binwidth
 
-        (counts, binedges) = np.histogram(np.log10(luminosity), range=(mi, ma), bins=NB)
+        (counts, binedges) = np.histogram(np.log10(G.QSOLuminosity[w])+np.log10(Msun)-np.log10(yr), range=(mi, ma), bins=NB)
         xaxeshisto = binedges[:-1] + 0.5 * binwidth
 
-        (counts2, binedges2) = np.histogram(np.log10(luminosity2), range=(mi, ma), bins=NB)
-        xaxeshisto2 = binedges2[:-1] + 0.5 * binwidth
-
-        (counts3, binedges3) = np.histogram(np.log10(luminosity3), range=(mi, ma), bins=NB)
-        xaxeshisto3 = binedges3[:-1] + 0.5 * binwidth
-
         ax.set_yscale('log')
-        plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='dynamic time')
-        plt.step(xaxeshisto2, counts2 / binwidth / (self.BoxSize/self.Hubble_h)**3, 'r-', label='Eddington limit')
-        plt.step(xaxeshisto3, counts3 / binwidth / (self.BoxSize/self.Hubble_h)**3, 'b-', label='Hopkins')
+        plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='Eddington limit')
 
         # -----------------------------------------------------------------------------
         # Observational Fits
@@ -485,39 +376,70 @@ class Results:
             Lstar = 11.94 +np.log10(3.9e33)
             gamma1 = 0.868
             gamma2 = 1.97
+            dphi = 0.28
+            dLstar = 0.21
+            dgamma1 = 0.050
+            dgamma2 = 0.17
         elif(G.z < 1.5):
             phi = -4.63
             Lstar = 12.59 +np.log10(3.9e33)
             gamma1 = 0.412
             gamma2 = 2.23
+            dphi = 0.15
+            dLstar = 0.11
+            dgamma1 = 0.122
+            dgamma2 = 0.15
         elif(G.z < 2.5):
             phi = -4.83
             Lstar = 13.10 +np.log10(3.9e33)
             gamma1 = 0.320
             gamma2 = 2.39
+            dphi = 0.05
+            dLstar = 0.04
+            dgamma1 = 0.046
+            dgamma2 = 0.07
         elif(G.z < 3.5):
             phi = -5.23
             Lstar = 13.17 +np.log10(3.9e33)
             gamma1 = 0.395
             gamma2 = 2.10
+            dphi = 0.12
+            dLstar = 0.10
+            dgamma1 = 0.060
+            dgamma2 = 0.12
         elif(G.z < 4.5):
             phi = -4.66
             Lstar = 12.39 +np.log10(3.9e33)
             gamma1 = 0.254
             gamma2 = 1.69
+            dphi = 0.37
+            dLstar = 0.32
+            dgamma1 = 0.736
+            dgamma2 = 0.18
         elif(G.z < 5.5):
             phi = -5.38
             Lstar = 12.46 +np.log10(3.9e33)
             gamma1 = 0.497
             gamma2 = 1.57
+            dphi = 1.19
+            dLstar = 1.10
+            dgamma1 = 0.458
+            dgamma2 = 0.41
         elif(G.z < 6.5):
             phi = -5.13
             Lstar = 11.00 +np.log10(3.9e33)
             gamma1 = 0.
             gamma2 = 1.11
+            dphi = 0.38
+            dLstar = 0.
+            dgamma1 = 0.
+            dgamma2 = 0.13
         QLF = 10.**phi / ((10.**(xaxes-Lstar))**gamma1 + (10.**(xaxes-Lstar))**gamma2)
+        QLF_min = 10.**(phi-dphi) / ((10.**(xaxes-(Lstar-dLstar)))**(gamma1-dgamma1) + (10.**(xaxes-(Lstar-dLstar)))**(gamma2-dgamma2))
+        QLF_max = 10.**(phi+dphi) / ((10.**(xaxes-(Lstar+dLstar)))**(gamma1+dgamma1) + (10.**(xaxes-(Lstar+dLstar)))**(gamma2+dgamma2))
 
-        plt.plot(xaxes, QLF)
+        plt.plot(xaxes, QLF, color='grey', label='Hopkins 2007')
+        ax.fill_between(xaxes, QLF_min, QLF_max, alpha=0.1, facecolor='grey')
         # -----------------------------------------------------------------------------
 
 
@@ -525,7 +447,7 @@ class Results:
         plt.xlabel(r'$\log L$    $[\mathrm{erg}\ \mathrm{s}^{-1}]$')  # and the x-axis labels
 
         plt.axis((43,48,1.e-8,1.e-3))
-        leg = plt.legend(loc='upper right')
+        leg = plt.legend(loc='upper right', prop={'size':12})
         leg.draw_frame(False)  # Don't want a box frame
 
         outputFile = OutputDir + '19.QSOLuminosityFunction_z' + str(G.z) + OutputFormat
@@ -537,156 +459,186 @@ class Results:
         OutputList.append(outputFile)
 
 
-# --------------------------------------------------------
-
-    def check_merger_snapnum(self, G):
-
-        print 'Plotting the QSO luminosity distribution of all galaxies'
+        print 'Plotting the QSO luminosity function in terms of M1450'
 
         seed(2222)
 
-        H = 100.
-        AgeRedshift = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM/(1.+self.z)**3)**0.5)
-        AgeUniverse = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM)**0.5)
+        alpha1 = 1.58
+        alpha2 = 0.69
+        alpha3 = 1.76
+        lambdaMin = 912.
+        lambdaBreak = 1200.
+        lambdaBreak2 = 5000.
+        lambdaMax = 1.e5
+        nuMin = c/lambdaMax*1.e8
+        nuBreak = c/lambdaBreak2*1.e8
+        nuBreak2 = c/lambdaBreak*1.e8
+        nuMax = c/lambdaMin*1.e8
+        nu1450 = c/1450.*1.e8
 
-        a = np.loadtxt("../input/treefiles/millennium/millennium.a_list", unpack='True')
+        alpha = 1.1
+        nu1050 = c/1050.*1.e8
+        nu912 = c/912.*1.e8
+        xmin = 0.001
+        xmax = 1.
 
-        z_snap = 1./a-1.
+        print nuMin, nuBreak, nuMax, nu1450
 
-        plt.figure()
+        tmp = nuBreak*((1. - (nuMin/nuBreak)**(1.-alpha1))/(1.-alpha1) + ((nuBreak2/nuBreak)**(1.-alpha2) - 1.)/(1.-alpha2) + ((nuMax/nuBreak)**(1.-alpha3) - (nuBreak2/nuBreak)**(1.-alpha3))/(1.-alpha3) * (nuBreak2/nuBreak)**(alpha3-alpha2))
+        tmp2 = (nu1050/nu1450)**-0.5 * (nu912/nu1050)**-alpha * nu912/(1.-alpha) * (xmax**(1.-alpha) - xmin**(1.-alpha))
+
+        print tmp/nuBreak
+        print tmp2
+
+        M1450luminosity = G.QSOLuminosity[w]*Msun/yr/tmp*(nu1450/nuBreak)**-alpha1
+
+        # M1450luminosity = luminosity/tmp2 * (nu1050/nu1450)**-0.5 * (nu912/nu1050)**-alpha * (nu1450/nu912)**-alpha
+
+        zBins = 100000
+        thisSum=0.
+        for i in range(zBins):
+            red = self.z/np.float64(zBins)*np.float64(i)
+            delta_z = self.z/np.float64(zBins)
+            thisSum = thisSum + c/(self.Hubble_h*km_cm*1.e2/Mpc_cm)/(self.OmegaM*(1.+red)**3+self.OmegaL)**0.5*delta_z
+        thisSum = (1.+self.z)*thisSum
+        lumDistance = thisSum
+        print lumDistance
+
+        MUV1450 = -2.5*np.log10(M1450luminosity/(4.*np.pi*lumDistance**2))-48.6-5.*np.log10(lumDistance/(10.*pc_cm))
+
+        print M1450luminosity
+        print MUV1450
+
+        if(G.z > 5.5):
+            Jiang16_x,Jiang16_y,Jiang16_ymax,Jiang16_ymin,Jiang16_xmin,Jiang16_xmax = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/Jiang2016_z6.dat', unpack='True', usecols=(0,1,2,3,4,5))
+            Kash15_x,Kash15_y,Kash15_ymax,Kash15_ymin = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/Kashikawa2015_z6.dat', unpack='True', usecols=(0,1,2,3))
+            Giall15_x,Giall15_y,Giall15_ymax,Giall15_ymin = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/Giallongo2015_z6.dat', unpack='True', usecols=(0,1,2,3))
+        elif(G.z > 4.5):
+            Giall15_x,Giall15_y,Giall15_ymax,Giall15_ymin = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/Giallongo2015_z5.dat', unpack='True', usecols=(0,1,2,3))
+            Greer15_x,Greer15_y,Greer15_ymax,Greer15_ymin = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/McGreer2013_z5.dat', unpack='True', usecols=(0,1,2,3))
+
         ax = plt.subplot(111)  # 1 plot on the figure
 
-        for i in range(MERGER_NUM):
-            w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.))[0]
-            #print len(w)
-            w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccrete[:,i] > 0.))[0]
-            #print len(w)
-            if(len(w) > dilute): w = sample(w, dilute)
+        mi = -29.
+        ma = -18.
+        binwidth = 0.25
+        NB = (ma - mi) / binwidth
 
-            time = AgeUniverse - G.QSOmergeAge[w,i]
-            redshift = (self.OmegaL/self.OmegaM/(np.sinh(1.5*self.OmegaL**0.5*H*time))**2)**(1./3.)-1.
+        (counts, binedges) = np.histogram(MUV1450, range=(mi, ma), bins=NB)
+        xaxeshisto = binedges[:-1] + 0.5 * binwidth
 
-            t = i*np.ones(len(G.QSOBHaccrete[w,i]))/MERGER_NUM
-            thisPlot = plt.scatter(redshift, G.QSOmergSnap[w,i], marker='o', s=10., c=t, cmap = cm.jet_r, alpha=0.8, label='Stars')
-            thisPlot.set_clim(vmin=0,vmax=1)
-
-        x = np.arange(len(a))
-        y = 1./a[x]-1.
-        plt.plot(y,x)
-        plt.axis([G.z-0.1, 11.0, 0., G.SnapNum[0]])
-        #ax.set_yscale('log')
-        plt.ylabel(r'$\mathrm{snapshot\ when\ estimate\ merge\ time}$')  # Set the y...
-        plt.xlabel(r'$z_{\mathrm{merge}}$')  # and the x-axis labels
-
-        #plt.axis([0., 10.5, 15., 64.])
-
-        #leg = plt.legend(loc='upper right')
-        #leg.draw_frame(False)  # Don't want a box frame
-
-        outputFile = OutputDir + '20.CheckMergerSnapNum' + OutputFormat
-        plt.savefig(outputFile)  # Save the figure
-        print 'Saved file to', outputFile
-        plt.close()
-
-        # Add this plot to our output list
-        OutputList.append(outputFile)
-
-
-# --------------------------------------------------------
-
-    def BHaccretion_time(self, G):
-
-        print 'Plotting the accretion onto BH over time for all galaxies'
-
-        seed(2222)
-
-        H = 100.
-        AgeRedshift = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM/(1.+self.z)**3)**0.5)
-        AgeUniverse = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM)**0.5)
-
-        a = np.loadtxt("../input/treefiles/millennium/millennium.a_list", unpack='True')
-
-        z_snap = 1./a-1.
-
-        plt.figure()
-        ax = plt.subplot(111)  # 1 plot on the figure
-
-        BH = np.empty(0)
-        BHaccrete = np.empty(0)
-        redshiftmerger = np.empty(0)
-
-        for i in range(MERGER_NUM):
-            w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccrete[:,i] > 0.))[0]
-            if(len(w) > dilute): w = sample(w, dilute)
-
-            time = AgeUniverse - G.QSOmergeAge[w,i]
-            redshift = (self.OmegaL/self.OmegaM/(np.sinh(1.5*self.OmegaL**0.5*H*time))**2)**(1./3.)-1.
-
-            BH = np.append(BH, G.BlackHoleMass[w])
-            BHaccrete = np.append(BHaccrete, G.QSOBHaccrete[w,i])
-            redshiftmerger = np.append(redshiftmerger, redshift)
-
-        BH_index = np.int32((np.log10(BH) - np.log10(np.min(BH))) * 2)#/ (round(np.log10(np.min(BH))) - round(np.log10(np.max(BH))))
-        redshift_index = np.int32((redshiftmerger - round(G.z)) * 2)
-
-        BH_index_max = np.max(BH_index) + 1
-        redshift_index_max = np.max(redshift_index) + 1
-        redshift_plot = np.arange(redshift_index_max)*0.5 + round(G.z)
-
-        hist_median = np.zeros((redshift_index_max, BH_index_max))
-        hist_mean = np.zeros((redshift_index_max, BH_index_max))
-        hist_std = np.zeros((redshift_index_max, BH_index_max))
-        hist_25 = np.zeros((redshift_index_max, BH_index_max))
-        hist_75 = np.zeros((redshift_index_max, BH_index_max))
-
-        cmap = plt.get_cmap('jet_r')
-        colors = [cmap(i) for i in np.linspace(0, 1, 6)]
-        print colors
-
-        for i in range(BH_index_max):
-            w = np.where(BH_index == i)
-            for j in range(redshift_index_max):
-                v = np.where((BH_index == i) & (redshift_index == j))[0]
-                if(len(v)>0):
-                    hist_median[j,i] = np.median(BHaccrete[v]/BH[v])
-                    hist_mean[j,i] = np.mean(BHaccrete[v]/BH[v])
-                    hist_std[j,i] = np.std(BHaccrete[v]/BH[v])
-                    hist_25[j,i] = np.percentile(BHaccrete[v]/BH[v],25)
-                    hist_75[j,i] = np.percentile(BHaccrete[v]/BH[v],75)
-                else:
-                    hist_std[j,i] = 1.e-4
-                    hist_25[j,i] = 1.e-4
-                    hist_75[j,i] = 1.e-4
-
-            if(i > 8 and i < 15):
-                k = i*0.5 + np.log10(np.min(BH))+10.
-                plt.plot(redshift_plot, hist_median[:,i], c=colors[i-9],  label='$M=10^{k}$'.format(k=k))
-                ax.fill_between(redshift_plot, hist_25[:,i], hist_75[:,i], alpha=0.1, facecolor=colors[i-9])
-
-        # redshift_bins = np.linspace(round(G.z), 12., num = (12-round(G.z))*2+1)
-        # BHaccrete_bins = 10.**np.linspace(-4.,0., num = 17)
-        #
-        # hist, xbins, ybins = np.histogram2d(redshiftmerger, BH, bins=(redshift_bins, BHaccrete_bins))
-        #
-        # print len(BH)
-        # print len(BHaccrete)
-        # print len(redshiftmerger)
-        #
-        # ax.pcolormesh(xbins, ybins, hist.T)
-
-        plt.axis([G.z, 12, 0.01, 1.])
         ax.set_yscale('log')
-        plt.ylabel(r'$\Delta\mathrm{M_{BH,Q}} / \mathrm{M_{BH}}$')  # Set the y...
-        plt.xlabel(r'$z_{\mathrm{merge}}$')  # and the x-axis labels
-        plt.legend(loc='best')
+        plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='Edddington limit')
 
-        outputFile = OutputDir + '21.BHaccretion_time' + OutputFormat
+        if(G.z > 5.5):
+            plt.errorbar(Jiang16_x, Jiang16_y*1.e-9, yerr=[Jiang16_y*1.e-9-Jiang16_ymin*1.e-9, Jiang16_ymax*1.e-9-Jiang16_y*1.e-9], xerr=[Jiang16_x-Jiang16_xmin, Jiang16_xmax-Jiang16_x], fmt='o', color='red', label='Jiang 2016')
+            plt.errorbar(Kash15_x, Kash15_y, yerr=[Kash15_y-Kash15_ymin, Kash15_ymax-Kash15_y], fmt='o', color='blue', label='Kashikawa 2015')
+            plt.errorbar(Giall15_x, 10.**Giall15_y, yerr=[10.**Giall15_y-10.**Giall15_ymin, 10.**Giall15_ymax-10.**Giall15_y], fmt='o', color='green', label='Giallongo 2015')
+        elif(G.z > 4.5):
+            plt.errorbar(Giall15_x, 10.**Giall15_y, yerr=[10.**Giall15_y-10.**Giall15_ymin, 10.**Giall15_ymax-10.**Giall15_y], fmt='o', color='green', label='Giallongo 2015')
+            plt.errorbar(Greer15_x, Greer15_y, yerr=[Greer15_y-Greer15_ymin, Greer15_ymax-Greer15_y], fmt='o', color='blue', label='McGreer 2013')
+
+        plt.ylabel(r'$\mathrm{number}\ \mathrm{density}$    $[\mathrm{Mpc}^{-3}]$')  # Set the y...
+        plt.xlabel(r'$\mathrm{M}_{1450}$')  # and the x-axis labels
+
+        plt.axis((mi,ma,1.e-11,1.e-4))
+        leg = plt.legend(loc='upper left', prop={'size':12})
+        leg.draw_frame(False)  # Don't want a box frame
+
+        outputFile = OutputDir + '19a.QSOLuminosityFunction1450_z' + str(G.z) + OutputFormat
         plt.savefig(outputFile)  # Save the figure
         print 'Saved file to', outputFile
         plt.close()
 
         # Add this plot to our output list
         OutputList.append(outputFile)
+
+# # --------------------------------------------------------
+#
+#     def BHaccretion_time(self, G):
+#
+#         print 'Plotting the accretion onto BH over time for all galaxies'
+#
+#         seed(2222)
+#
+#         H = 100.
+#         AgeRedshift = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM/(1.+self.z)**3)**0.5)
+#         AgeUniverse = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM)**0.5)
+#
+#         a = np.loadtxt(self.aList, unpack='True')
+#
+#         z_snap = 1./a-1.
+#
+#         plt.figure()
+#         ax = plt.subplot(111)  # 1 plot on the figure
+#
+#         BH = np.empty(0)
+#         BHaccrete = np.empty(0)
+#         redshiftmerger = np.empty(0)
+#
+#         for i in range(MERGER_NUM):
+#             w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccrete[:,i] > 0.))[0]
+#             if(len(w) > dilute): w = sample(w, dilute)
+#
+#             time = AgeUniverse - G.QSOmergeAge[w,i]
+#             redshift = (self.OmegaL/self.OmegaM/(np.sinh(1.5*self.OmegaL**0.5*H*time))**2)**(1./3.)-1.
+#
+#             BH = np.append(BH, G.BlackHoleMass[w] / self.Hubble_h)
+#             BHaccrete = np.append(BHaccrete, G.QSOBHaccrete[w,i] / self.Hubble_h)
+#             redshiftmerger = np.append(redshiftmerger, redshift)
+#
+#         BH_index = np.int32((np.log10(BH) - np.log10(np.min(BH))) * 2)#/ (round(np.log10(np.min(BH))) - round(np.log10(np.max(BH))))
+#         redshift_index = np.int32((redshiftmerger - round(G.z)) * 2)
+#
+#         BH_index_max = np.max(BH_index) + 1
+#         redshift_index_max = np.max(redshift_index) + 1
+#         redshift_plot = np.arange(redshift_index_max)*0.5 + round(G.z)
+#
+#         hist_median = np.zeros((redshift_index_max, BH_index_max))
+#         hist_mean = np.zeros((redshift_index_max, BH_index_max))
+#         hist_std = np.zeros((redshift_index_max, BH_index_max))
+#         hist_25 = np.zeros((redshift_index_max, BH_index_max))
+#         hist_75 = np.zeros((redshift_index_max, BH_index_max))
+#
+#         i_min = 8
+#         i_max = 13
+#
+#         cmap = plt.get_cmap('jet_r')
+#         colors = [cmap(i) for i in np.linspace(0, 1, 6)]
+#
+#         for i in range(BH_index_max):
+#             w = np.where(BH_index == i)
+#             for j in range(redshift_index_max):
+#                 v = np.where((BH_index == i) & (redshift_index == j))[0]
+#                 if(len(v)>0):
+#                     hist_median[j,i] = np.median(BHaccrete[v]/BH[v])
+#                     hist_mean[j,i] = np.mean(BHaccrete[v]/BH[v])
+#                     hist_std[j,i] = np.std(BHaccrete[v]/BH[v])
+#                     hist_25[j,i] = np.percentile(BHaccrete[v]/BH[v],25)
+#                     hist_75[j,i] = np.percentile(BHaccrete[v]/BH[v],75)
+#                 else:
+#                     hist_std[j,i] = 1.e-4
+#                     hist_25[j,i] = 1.e-4
+#                     hist_75[j,i] = 1.e-4
+#
+#             if(i >= i_min and i <= i_max):
+#                 k = i*0.5 + np.log10(np.min(BH))+10.
+#                 plt.plot(redshift_plot, hist_median[:,i], c=colors[i-9],  label='$M=10^{k}$'.format(k=k))
+#                 ax.fill_between(redshift_plot, hist_25[:,i], hist_75[:,i], alpha=0.1, facecolor=colors[i-9])
+#
+#         plt.axis([G.z, 12, 0.01, 1.])
+#         ax.set_yscale('log')
+#         plt.ylabel(r'$\Delta\mathrm{M_{BH,Q}} / \mathrm{M_{BH}}$')  # Set the y...
+#         plt.xlabel(r'$z_{\mathrm{merge}}$')  # and the x-axis labels
+#         plt.legend(loc='best')
+#
+#         outputFile = OutputDir + '21.BHaccretion_time_z' + str(G.z) + OutputFormat
+#         plt.savefig(outputFile)  # Save the figure
+#         print 'Saved file to', outputFile
+#         plt.close()
+#
+#         # Add this plot to our output list
+#         OutputList.append(outputFile)
 
 # =================================================================
 
@@ -704,15 +656,15 @@ if __name__ == '__main__':
         '-d',
         '--dir_name',
         dest='DirName',
-        default='./results/millennium_QSO/',
-        help='input directory name (default: ./results/millennium_QSO/)',
+        default='./results/',
+        help='input directory name (default: ./results/)',
         metavar='DIR',
         )
     parser.add_option(
         '-f',
         '--file_base',
         dest='FileName',
-        default='model_z0.000',
+        default='model_z6.197',
         help='filename base (default: model_z0.000)',
         metavar='FILE',
         )
@@ -722,7 +674,7 @@ if __name__ == '__main__':
         type='int',
         nargs=2,
         dest='FileRange',
-        default=(0, 7),
+        default=(0, 511),
         help='first and last filenumbers (default: 0 7)',
         metavar='FIRST LAST',
         )
@@ -749,11 +701,9 @@ if __name__ == '__main__':
     G = res.read_gals(fin_base, FirstFile, LastFile)
     G.z = np.float32(re.findall('\d+\.\d+',opt.FileName)[0])
 
-    print 'Anayzing snapshot', G.SnapNum[0], "at redshift", G.z
+    print 'Anaylzing snapshot', G.SnapNum[0], "at redshift", G.z
 
     res.QSOBHaccrete_distribution(G)
     res.QSOBHaccrete_function(G)
-    res.QSO_distribution(G)
     res.QSOluminosity_function(G)
-    res.check_merger_snapnum(G)
-    res.BHaccretion_time(G)
+    # res.BHaccretion_time(G)

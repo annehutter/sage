@@ -58,7 +58,7 @@ int DiskInstabilityOn;
 int AGNrecipeOn;
 int SFprescription;
 int TrackBHgrowthOn;
-
+int ContinuousAccretionOn;
 
 // recipe parameters
 double RecycleFraction;

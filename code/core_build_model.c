@@ -365,15 +365,26 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
           {
             if(Gal[p].MergTime <= 0.0)  // a merger has occured!
             {
+              Gal[merger_centralgal].hasJustMerged = 1;
               time = Age[Gal[p].SnapNum] - (step + 0.5) * (deltaT / STEPS);
               deal_with_galaxy_merger(p, merger_centralgal, centralgal, time, deltaT / STEPS, halonr, step);
             }
           }
         }
       }
-
     }
 
+    if(ContinuousAccretionOn != 0)
+    {
+      for(p = 0; p < ngal; p++)
+      {
+          if(Gal[p].ColdGasToAccrete > 0. && Gal[p].hasJustMerged == 0)
+          {
+            printf("growing BH\n");
+            grow_black_hole_continuousAccretion(p, 0., deltaT / STEPS);
+          }
+      }
+    }
   } // Go on to the next STEPS substep
 
 

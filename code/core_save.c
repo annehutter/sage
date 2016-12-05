@@ -210,16 +210,28 @@ void prepare_galaxy_for_output(int filenr, int tree, struct GALAXY *g, struct GA
     o->infallVmax = 0.0;
   }
 
-  for (j = 0; j < MERGER_NUM; j++)
+  // if(TrackBHgrowthOn !=0)
+  // {
+    for (j = 0; j < MERGER_NUM; j++)
     {
         o->QSOBHaccrete[j] = g->QSOBHaccrete[j];
         o->QSOmergeAge[j] = g->QSOmergeAge[j];
         o->QSOmergeTime[j] = g->QSOmergeTime[j];
         o->QSOmergSnap[j] = g->QSOmergSnap[j];
         o->QSOBH[j] = g->QSOBH[j];
+        o->QSOmergeType[j] = g->QSOmergeType[j];
     }
     o->MergSnap = g->MergSnap;
     o->MergNum = g->MergNum;
+  // }
+  
+  // if(ContinuousAccretionOn != 0)
+  // {
+    o->QSOBHaccretionRate = g->QSOBHaccretionRate;
+    o->QSOBHaccretionMass = g->QSOBHaccretionMass;
+    o->QSOLuminosity = g->QSOLuminosity;
+    o->ColdGasToAccrete = g->ColdGasToAccrete;
+  // }
 }
 
 

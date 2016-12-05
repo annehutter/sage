@@ -94,9 +94,17 @@ void init_galaxy(int p, int halonr)
     Gal[p].QSOmergeTime[j] = 0.0;
     Gal[p].QSOmergSnap[j] = 0;
     Gal[p].QSOBH[j] = 0.;
+    Gal[p].QSOmergeType[j] = -1;
   }
   Gal[p].MergSnap = 0;
   Gal[p].MergNum = 0;
+
+  Gal[p].hasJustMerged = 0;
+  Gal[p].rad_efficiency = 0.;
+  Gal[p].QSOBHaccretionRate = 0.;
+  Gal[p].QSOBHaccretionMass = 0.;
+  Gal[p].QSOLuminosity = 0.;
+  Gal[p].ColdGasToAccrete = 0.;
 }
 
 

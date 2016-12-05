@@ -36,8 +36,6 @@ double estimate_merging_time(int sat_halo, int mother_halo, int ngal)
 
 }
 
-
-
 void deal_with_galaxy_merger(int p, int merger_centralgal, int centralgal, double time, double dt, int halonr, int step)
 {
   double mi, ma, mass_ratio;
@@ -71,6 +69,9 @@ void deal_with_galaxy_merger(int p, int merger_centralgal, int centralgal, doubl
       printf("deal with galaxy merger\t%d: mergTime = %e\t mergTimeInit = %e\t dt = %e\n", p, Gal[p].MergTime, Gal[p].MergTimeInit, dt*(step+1));
 #endif
       grow_black_hole_trackBHgrowth(merger_centralgal, p, mass_ratio, time);
+    }else if(ContinuousAccretionOn != 0)
+    {
+      grow_black_hole_continuousAccretion(merger_centralgal, mass_ratio, dt);
     }else{
       grow_black_hole(merger_centralgal, mass_ratio);
     }
@@ -94,7 +95,6 @@ void deal_with_galaxy_merger(int p, int merger_centralgal, int centralgal, doubl
   }
 
 }
-
 
 
 void grow_black_hole(int merger_centralgal, double mass_ratio)
@@ -146,6 +146,57 @@ void grow_black_hole_trackBHgrowth(int merger_centralgal, int p, double mass_rat
     quasar_mode_wind(merger_centralgal, BHaccrete);
   }
 }
+
+void grow_black_hole_continuousAccretion(int merger_centralgal, double mass_ratio, double dt)
+{
+  double BHaccrete, BHaccretionRate, BHaccretionMass, fEdd;
+  double Luminosity;
+  double metallicity;
+
+  if(Gal[merger_centralgal].ColdGas > 0.0)
+  {
+    // 1) Determine BH mass to be accreted (this is model dependent!)
+    BHaccrete = 0.;
+    if(Gal[merger_centralgal].hasJustMerged == 1)
+    {
+      BHaccrete = BlackHoleGrowthRate * mass_ratio /
+                  (1.0 + pow(280.0 / Gal[merger_centralgal].Vvir, 2.0)) * Gal[merger_centralgal].ColdGas;
+      printf("BHaccrete = %e\n", BHaccrete);
+    }
+    BHaccrete += Gal[merger_centralgal].ColdGasToAccrete;
+
+    // cannot accrete more gas than is available!
+    if(BHaccrete > Gal[merger_centralgal].ColdGas)
+      BHaccrete = Gal[merger_centralgal].ColdGas;
+
+    // 2) obtain BH accreted in timestep & luminosity (this is model dependent!)
+    fEdd = 1.;
+    Gal[merger_centralgal].rad_efficiency = 0.1;
+    BHaccretionRate = getBHaccretionRate_EddingtonLimited(Gal[merger_centralgal].BlackHoleMass, fEdd, Gal[merger_centralgal].rad_efficiency, dt);
+    BHaccretionMass = getBHaccretionMass_EddingtonLimited(Gal[merger_centralgal].BlackHoleMass, fEdd, Gal[merger_centralgal].rad_efficiency, dt);
+    Luminosity = getLuminosity_radEfficient(BHaccretionRate, Gal[merger_centralgal].rad_efficiency);
+
+    Gal[merger_centralgal].QSOBHaccretionRate = BHaccretionRate;
+    Gal[merger_centralgal].QSOBHaccretionMass = BHaccretionMass;
+    Gal[merger_centralgal].QSOLuminosity = Luminosity;
+
+    Gal[merger_centralgal].ColdGasToAccrete = BHaccrete - BHaccretionMass;
+    BHaccrete = BHaccretionMass;
+
+    if(Gal[merger_centralgal].ColdGasToAccrete > 0.) printf("BHaccrete = %e\tBHaccretionMass = %e\n", BHaccrete, BHaccretionMass);
+
+    // 3) update values
+    metallicity = get_metallicity(Gal[merger_centralgal].ColdGas, Gal[merger_centralgal].MetalsColdGas);
+    Gal[merger_centralgal].BlackHoleMass += BHaccrete;
+    Gal[merger_centralgal].ColdGas -= BHaccrete;
+    Gal[merger_centralgal].MetalsColdGas -= metallicity * BHaccrete;
+
+    Gal[merger_centralgal].QuasarModeBHaccretionMass += BHaccrete;
+
+    quasar_mode_wind(merger_centralgal, BHaccrete);
+  }
+}
+
 
 void quasar_mode_wind(int gal, float BHaccrete)
 {

@@ -45,10 +45,15 @@ void collisional_starburst_recipe(double mass_ratio, int merger_centralgal, int 
 void update_from_star_formation(int p, double stars, double metallicity);
 void update_from_feedback(int p, int centralgal, double reheated_mass, double ejected_mass, double metallicity);
 void make_bulge_from_burst(int p);
-void track_BHgrowth(int merger_centralgal, int p, double BHaccrete, double time);
 void grow_black_hole_trackBHgrowth(int merger_centralgal, int p, double mass_ratio, double time);
 void grow_black_hole(int merger_centralgal, double mass_ratio);
+void grow_black_hole_continuousAccretion(int merger_centralgal, double mass_ratio, double dt);
 void check_disk_instability(int p, int centralgal, int halonr, double time, double dt, int step);
+
+void track_BHgrowth(int merger_centralgal, int p, double BHaccrete, double time);
+double getBHaccretionRate_EddingtonLimited(double BHmass, double fEdd, double rad_efficiency, double dt);
+double getBHaccretionMass_EddingtonLimited(double BHmass, double fEdd, double rad_efficiency, double dt);
+double getLuminosity_radEfficient(double BHaccretionRate, double rad_efficiency);
 
 void strip_from_satellite(int halonr, int centralgal, int gal);
 void disrupt_satellite_to_ICS(int centralgal, int gal);

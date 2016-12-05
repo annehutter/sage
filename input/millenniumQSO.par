@@ -45,7 +45,8 @@ AGNrecipeOn           2   ;0: switch off; 1: empirical model; 2: Bondi-Hoyle mod
 SupernovaRecipeOn     1   ;0: switch off
 ReionizationOn        1   ;0: switch off
 DiskInstabilityOn     1   ;0: switch off; 1: bulge and BH growth through instabilities w. instability starbursts
-TrackBHgrowthOn       1   ;0: switch off; 1: store BH growth by mergers & disk instabilities
+TrackBHgrowthOn       0   ;0: switch off; 1: store BH growth by mergers & disk instabilities
+ContinuousAccretionOn 1   ;0: switch off; 1: apply a continuous accretion to BH
 
 
 %------------------------------------------
