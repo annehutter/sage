@@ -381,7 +381,7 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
           if(Gal[p].ColdGasToAccrete > 0. && Gal[p].hasJustMerged == 0)
           {
             printf("growing BH\n");
-            grow_black_hole_continuousAccretion(p, 0., deltaT / STEPS);
+            grow_black_hole_continuousAccretion(p, p, 0., time, deltaT / STEPS);
           }
       }
     }

@@ -84,7 +84,7 @@ void check_disk_instability(int p, int centralgal, int halonr, double time, doub
 #endif
           grow_black_hole_trackBHgrowth(p, p, unstable_gas_fraction, time);
         }else if(ContinuousAccretionOn != 0){
-          grow_black_hole_continuousAccretion(p, unstable_gas_fraction, dt);
+          grow_black_hole_continuousAccretion(p, p, unstable_gas_fraction, time, dt);
         }else{
           grow_black_hole(p, unstable_gas_fraction);
         }

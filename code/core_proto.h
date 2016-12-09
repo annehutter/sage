@@ -47,13 +47,27 @@ void update_from_feedback(int p, int centralgal, double reheated_mass, double ej
 void make_bulge_from_burst(int p);
 void grow_black_hole_trackBHgrowth(int merger_centralgal, int p, double mass_ratio, double time);
 void grow_black_hole(int merger_centralgal, double mass_ratio);
-void grow_black_hole_continuousAccretion(int merger_centralgal, double mass_ratio, double dt);
+void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double mass_ratio, double time, double dt);
 void check_disk_instability(int p, int centralgal, int halonr, double time, double dt, int step);
 
 void track_BHgrowth(int merger_centralgal, int p, double BHaccrete, double time);
+double getBHaccretionRate(double BHmass, double rho, double temperature, double gamma, double mu, double fEdd, double rad_efficiency, double dt);
+double getBHaccretionMass(double BHmass, double rho, double temperature, double gamma, double mu, double fEdd, double rad_efficiency, double dt);
+double getBondiRate(double BHmass, double rho, double temperature, double gamma, double mu);
+double compute_fEdd(double BHmass, double rho, double temperature, double gamma, double mu, double fEdd, double rad_efficiency, double dt);
 double getBHaccretionRate_EddingtonLimited(double BHmass, double fEdd, double rad_efficiency, double dt);
 double getBHaccretionMass_EddingtonLimited(double BHmass, double fEdd, double rad_efficiency, double dt);
+double getBHaccretionRate_Bondi(double BHmass, double rho, double temperature, double gamma, double mu);
+double getBHaccretionMass_Bondi(double BHmass, double rho, double temperature, double gamma, double mu, double dt);
+double getLuminosity(double BHaccretionRate, double rad_efficiency, double BHmass, double rho, double temperature, double gamma, double mu, double fEdd);
+double getEddingtonLuminosity(double BHmass);
 double getLuminosity_radEfficient(double BHaccretionRate, double rad_efficiency);
+double getLuminosity_radInefficient(double BHmass, double fEdd);
+double getPeakTime(double BHmass, double fEdd, double rad_efficiency, double BHaccreteMassEdd);
+double getBHaccretionRate_Hopkins(double BHmass, double rad_efficiency, double BHaccrete, double F, double dt);
+double getBHaccretionMass_Hopkins(double BHmass, double rad_efficiency, double BHaccrete, double F, double dt);
+double getLuminosity_Hopkins(double BHmass, double rad_efficiency, double BHaccrete, double F, double dt);
+
 
 void strip_from_satellite(int halonr, int centralgal, int gal);
 void disrupt_satellite_to_ICS(int centralgal, int gal);

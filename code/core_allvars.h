@@ -17,6 +17,7 @@ do {                                                                \
 #define  MAX_NODE_NAME_LEN 50
 #define  ABSOLUTEMAXSNAPS 1000
 
+#define  PI          3.14159265359
 
 #define  GRAVITY     6.672e-8
 #define  SOLAR_MASS  1.989e33
@@ -30,6 +31,7 @@ do {                                                                \
 #define  CM_PER_MPC  3.085678e24
 #define  CM_PER_KM   1.e5
 #define  PROTONMASS  1.6726e-24
+#define  THOMSON_CS  6.652459e-25
 #define  HUBBLE      3.2407789e-18   /* in h/sec */
 
 #define  SEC_PER_MEGAYEAR   3.155e13
@@ -114,9 +116,7 @@ struct GALAXY_OUTPUT
   int QSOmergSnap[MERGER_NUM];
   int MergNum;
   int QSOmergeType[MERGER_NUM];
-  //
-  // int hasJustMerged;
-  // double rad_efficiency;
+
   float QSOBHaccretionRate;
   float QSOBHaccretionMass;
   float QSOLuminosity;
@@ -208,7 +208,6 @@ struct GALAXY
 
   // quasar accretion model
   int hasJustMerged;
-  double rad_efficiency;
   float QSOBHaccretionRate;
   float QSOBHaccretionMass;
   float QSOLuminosity;
@@ -289,6 +288,10 @@ extern double FeedbackEjectionEfficiency;
 extern double RadioModeEfficiency;
 extern double QuasarModeEfficiency;
 extern double BlackHoleGrowthRate;
+extern double QuasarRadEfficiency;
+extern double GasTemperature;
+extern double GasGamma;
+extern double GasMu;
 extern double Reionization_z0;
 extern double Reionization_zr;
 extern double ThresholdSatDisruption;

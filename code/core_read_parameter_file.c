@@ -174,6 +174,22 @@ void read_parameter_file(char *fname)
   addr[nt] = &QuasarModeEfficiency;
   id[nt++] = DOUBLE;
 
+  strcpy(tag[nt], "QuasarRadEfficiency");
+  addr[nt] = &QuasarRadEfficiency;
+  id[nt++] = DOUBLE;
+
+  strcpy(tag[nt], "GasTemperature");
+  addr[nt] = &GasTemperature;
+  id[nt++] = DOUBLE;
+
+  strcpy(tag[nt], "GasGamma");
+  addr[nt] = &GasGamma;
+  id[nt++] = DOUBLE;
+
+  strcpy(tag[nt], "GasMu");
+  addr[nt] = &GasMu;
+  id[nt++] = DOUBLE;
+
   strcpy(tag[nt], "Reionization_z0");
   addr[nt] = &Reionization_z0;
   id[nt++] = DOUBLE;

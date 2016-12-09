@@ -23,6 +23,7 @@ whichimf = 1        # 0=Slapeter; 1=Chabrier
 dilute = 7500       # Number of galaxies to plot in scatter plots
 sSFRcut = -11.0     # Divide quiescent from star forming galaxies (when plotmags=0)
 MERGER_NUM = 10
+ContinuousAccretionOn = 1
 
 Grav_const = 6.67e-8
 R = 8.31e7
@@ -261,9 +262,8 @@ class Results:
         ax = plt.subplot(111)  # 1 plot on the figure
 
         w = np.where((G.Mvir  > 0.0) & (G.StellarMass > 0.))[0]
-        if(len(w) > dilute): w = sample(w, dilute)
+        # if(len(w) > dilute): w = sample(w, dilute)
 
-        print G.QSOBHaccretionRate[w]
         thisPlot = plt.scatter(np.log10(G.Mvir[w] / self.Hubble_h * 1.e10), np.log10(G.QSOBHaccretionRate[w] / self.Hubble_h), marker='o', s=20., alpha=0.8, label='Stars')
         thisPlot.set_clim(vmin=0,vmax=1)
 
@@ -290,7 +290,6 @@ class Results:
 
 
         w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccretionRate > 0.))[0]
-        if(len(w) > dilute): w = sample(w, dilute)
 
         BHaccrete = np.zeros(len(w))
 
@@ -298,8 +297,8 @@ class Results:
 
         ax = plt.subplot(111)  # 1 plot on the figure
 
-        mi = round(np.min(np.log10(BHaccrete)))
-        ma = round(np.max(np.log10(BHaccrete)))
+        mi = -8#round(np.min(np.log10(BHaccrete)))
+        ma = 4#round(np.max(np.log10(BHaccrete)))
 
         binwidth = 0.25
         NB = (ma - mi) / binwidth
@@ -311,7 +310,7 @@ class Results:
         plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='los-velocity')
 
         plt.ylabel(r'$\mathrm{number}\ \mathrm{density}$    $[\mathrm{Mpc}^{-3}]$')  # Set the y...
-        plt.xlabel(r'$\log \Delta M_{BH}$    $[\mathrm{M}_{\odot}]$')  # and the x-axis labels
+        plt.xlabel(r'$\log \dot{M_{BH}}$    $[\mathrm{M}_{\odot}]$')  # and the x-axis labels
 
         outputFile = OutputDir + '17.QSOBHaccreteFunction_z' + str(G.z) + OutputFormat
         plt.savefig(outputFile)  # Save the figure
@@ -349,15 +348,12 @@ class Results:
         plt.figure()
 
         w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccretionRate > 0.))[0]
-        if(len(w) > dilute): w = sample(w, dilute)
-
-        print np.log10(G.QSOLuminosity[w])
 
         # -----------------------------------------------------------------------------
         ax = plt.subplot(111)  # 1 plot on the figure
 
         mi = 43
-        ma = 48#round(np.max(np.log10(luminosity)))
+        ma = 50#round(np.max(np.log10(luminosity)))
         binwidth = 0.25
         NB = (ma - mi) / binwidth
 
@@ -365,12 +361,17 @@ class Results:
         xaxeshisto = binedges[:-1] + 0.5 * binwidth
 
         ax.set_yscale('log')
-        plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='Eddington limit')
+        if(ContinuousAccretionOn == 1):
+            plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='Eddington limit')
+        elif(ContinuousAccretionOn == 2):
+            plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='$f_{Edd} (z)$')
+        elif(ContinuousAccretionOn == 3):
+            plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='Eddington-limited growth & decay')
 
         # -----------------------------------------------------------------------------
         # Observational Fits
 
-        xaxes = np.arange(43.,48.,0.1)
+        xaxes = np.arange(mi,ma,0.1)
         if(G.z < 0.5):
             phi = -5.45
             Lstar = 11.94 +np.log10(3.9e33)
@@ -446,7 +447,7 @@ class Results:
         plt.ylabel(r'$\mathrm{number}\ \mathrm{density}$    $[\mathrm{Mpc}^{-3}]$')  # Set the y...
         plt.xlabel(r'$\log L$    $[\mathrm{erg}\ \mathrm{s}^{-1}]$')  # and the x-axis labels
 
-        plt.axis((43,48,1.e-8,1.e-3))
+        plt.axis((mi,ma,1.e-9,1.e-3))
         leg = plt.legend(loc='upper right', prop={'size':12})
         leg.draw_frame(False)  # Don't want a box frame
 
@@ -463,36 +464,14 @@ class Results:
 
         seed(2222)
 
-        alpha1 = 1.58
-        alpha2 = 0.69
-        alpha3 = 1.76
-        lambdaMin = 912.
-        lambdaBreak = 1200.
-        lambdaBreak2 = 5000.
-        lambdaMax = 1.e5
-        nuMin = c/lambdaMax*1.e8
-        nuBreak = c/lambdaBreak2*1.e8
-        nuBreak2 = c/lambdaBreak*1.e8
-        nuMax = c/lambdaMin*1.e8
+        alpha1 = -1.76
+        alpha2 = -0.44
+        lambdaBreak = 1050.
+        nuBreak = c/lambdaBreak*1.e8
         nu1450 = c/1450.*1.e8
 
-        alpha = 1.1
-        nu1050 = c/1050.*1.e8
-        nu912 = c/912.*1.e8
-        xmin = 0.001
-        xmax = 1.
-
-        print nuMin, nuBreak, nuMax, nu1450
-
-        tmp = nuBreak*((1. - (nuMin/nuBreak)**(1.-alpha1))/(1.-alpha1) + ((nuBreak2/nuBreak)**(1.-alpha2) - 1.)/(1.-alpha2) + ((nuMax/nuBreak)**(1.-alpha3) - (nuBreak2/nuBreak)**(1.-alpha3))/(1.-alpha3) * (nuBreak2/nuBreak)**(alpha3-alpha2))
-        tmp2 = (nu1050/nu1450)**-0.5 * (nu912/nu1050)**-alpha * nu912/(1.-alpha) * (xmax**(1.-alpha) - xmin**(1.-alpha))
-
-        print tmp/nuBreak
-        print tmp2
-
-        M1450luminosity = G.QSOLuminosity[w]*Msun/yr/tmp*(nu1450/nuBreak)**-alpha1
-
-        # M1450luminosity = luminosity/tmp2 * (nu1050/nu1450)**-0.5 * (nu912/nu1050)**-alpha * (nu1450/nu912)**-alpha
+        tmp = (1. + alpha1) * (1. + alpha2) / (alpha1 - alpha2)
+        M1450luminosity = G.QSOLuminosity[w] * tmp * (nu1450/nuBreak)**alpha2 / nuBreak * Msun / yr
 
         zBins = 100000
         thisSum=0.
@@ -502,12 +481,11 @@ class Results:
             thisSum = thisSum + c/(self.Hubble_h*km_cm*1.e2/Mpc_cm)/(self.OmegaM*(1.+red)**3+self.OmegaL)**0.5*delta_z
         thisSum = (1.+self.z)*thisSum
         lumDistance = thisSum
-        print lumDistance
 
         MUV1450 = -2.5*np.log10(M1450luminosity/(4.*np.pi*lumDistance**2))-48.6-5.*np.log10(lumDistance/(10.*pc_cm))
 
-        print M1450luminosity
-        print MUV1450
+        print np.max(M1450luminosity)
+        print np.min(MUV1450)
 
         if(G.z > 5.5):
             Jiang16_x,Jiang16_y,Jiang16_ymax,Jiang16_ymin,Jiang16_xmin,Jiang16_xmax = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/Jiang2016_z6.dat', unpack='True', usecols=(0,1,2,3,4,5))
@@ -528,7 +506,12 @@ class Results:
         xaxeshisto = binedges[:-1] + 0.5 * binwidth
 
         ax.set_yscale('log')
-        plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='Edddington limit')
+        if(ContinuousAccretionOn == 1):
+            plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='Eddington limit')
+        elif(ContinuousAccretionOn == 2):
+            plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='$f_{Edd} (z)$')
+        elif(ContinuousAccretionOn == 3):
+            plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='Eddington-limited growth & decay')
 
         if(G.z > 5.5):
             plt.errorbar(Jiang16_x, Jiang16_y*1.e-9, yerr=[Jiang16_y*1.e-9-Jiang16_ymin*1.e-9, Jiang16_ymax*1.e-9-Jiang16_y*1.e-9], xerr=[Jiang16_x-Jiang16_xmin, Jiang16_xmax-Jiang16_x], fmt='o', color='red', label='Jiang 2016')
