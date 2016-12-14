@@ -536,92 +536,45 @@ class Results:
         # Add this plot to our output list
         OutputList.append(outputFile)
 
-# # --------------------------------------------------------
-#
-#     def BHaccretion_time(self, G):
-#
-#         print 'Plotting the accretion onto BH over time for all galaxies'
-#
-#         seed(2222)
-#
-#         H = 100.
-#         AgeRedshift = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM/(1.+self.z)**3)**0.5)
-#         AgeUniverse = 2./(3.*H*self.OmegaL**0.5)*np.arcsinh((self.OmegaL/self.OmegaM)**0.5)
-#
-#         a = np.loadtxt(self.aList, unpack='True')
-#
-#         z_snap = 1./a-1.
-#
-#         plt.figure()
-#         ax = plt.subplot(111)  # 1 plot on the figure
-#
-#         BH = np.empty(0)
-#         BHaccrete = np.empty(0)
-#         redshiftmerger = np.empty(0)
-#
-#         for i in range(MERGER_NUM):
-#             w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccrete[:,i] > 0.))[0]
-#             if(len(w) > dilute): w = sample(w, dilute)
-#
-#             time = AgeUniverse - G.QSOmergeAge[w,i]
-#             redshift = (self.OmegaL/self.OmegaM/(np.sinh(1.5*self.OmegaL**0.5*H*time))**2)**(1./3.)-1.
-#
-#             BH = np.append(BH, G.BlackHoleMass[w] / self.Hubble_h)
-#             BHaccrete = np.append(BHaccrete, G.QSOBHaccrete[w,i] / self.Hubble_h)
-#             redshiftmerger = np.append(redshiftmerger, redshift)
-#
-#         BH_index = np.int32((np.log10(BH) - np.log10(np.min(BH))) * 2)#/ (round(np.log10(np.min(BH))) - round(np.log10(np.max(BH))))
-#         redshift_index = np.int32((redshiftmerger - round(G.z)) * 2)
-#
-#         BH_index_max = np.max(BH_index) + 1
-#         redshift_index_max = np.max(redshift_index) + 1
-#         redshift_plot = np.arange(redshift_index_max)*0.5 + round(G.z)
-#
-#         hist_median = np.zeros((redshift_index_max, BH_index_max))
-#         hist_mean = np.zeros((redshift_index_max, BH_index_max))
-#         hist_std = np.zeros((redshift_index_max, BH_index_max))
-#         hist_25 = np.zeros((redshift_index_max, BH_index_max))
-#         hist_75 = np.zeros((redshift_index_max, BH_index_max))
-#
-#         i_min = 8
-#         i_max = 13
-#
-#         cmap = plt.get_cmap('jet_r')
-#         colors = [cmap(i) for i in np.linspace(0, 1, 6)]
-#
-#         for i in range(BH_index_max):
-#             w = np.where(BH_index == i)
-#             for j in range(redshift_index_max):
-#                 v = np.where((BH_index == i) & (redshift_index == j))[0]
-#                 if(len(v)>0):
-#                     hist_median[j,i] = np.median(BHaccrete[v]/BH[v])
-#                     hist_mean[j,i] = np.mean(BHaccrete[v]/BH[v])
-#                     hist_std[j,i] = np.std(BHaccrete[v]/BH[v])
-#                     hist_25[j,i] = np.percentile(BHaccrete[v]/BH[v],25)
-#                     hist_75[j,i] = np.percentile(BHaccrete[v]/BH[v],75)
-#                 else:
-#                     hist_std[j,i] = 1.e-4
-#                     hist_25[j,i] = 1.e-4
-#                     hist_75[j,i] = 1.e-4
-#
-#             if(i >= i_min and i <= i_max):
-#                 k = i*0.5 + np.log10(np.min(BH))+10.
-#                 plt.plot(redshift_plot, hist_median[:,i], c=colors[i-9],  label='$M=10^{k}$'.format(k=k))
-#                 ax.fill_between(redshift_plot, hist_25[:,i], hist_75[:,i], alpha=0.1, facecolor=colors[i-9])
-#
-#         plt.axis([G.z, 12, 0.01, 1.])
-#         ax.set_yscale('log')
-#         plt.ylabel(r'$\Delta\mathrm{M_{BH,Q}} / \mathrm{M_{BH}}$')  # Set the y...
-#         plt.xlabel(r'$z_{\mathrm{merge}}$')  # and the x-axis labels
-#         plt.legend(loc='best')
-#
-#         outputFile = OutputDir + '21.BHaccretion_time_z' + str(G.z) + OutputFormat
-#         plt.savefig(outputFile)  # Save the figure
-#         print 'Saved file to', outputFile
-#         plt.close()
-#
-#         # Add this plot to our output list
-#         OutputList.append(outputFile)
+# --------------------------------------------------------
+
+    def BHmass_function(self, G):
+
+        print 'Plotting the BH mass function'
+
+        seed(2222)
+
+        w = np.where((G.BlackHoleMass > 0.0))[0]
+
+        plt.figure()
+        ax = plt.subplot(111)  # 1 plot on the figure
+
+        mi = 2.
+        ma = 13.
+        binwidth = 0.5
+        NB = (ma - mi) / binwidth
+
+        (counts, binedges) = np.histogram(np.log10(G.BlackHoleMass[w])+10., range=(mi, ma), bins=NB)
+        xaxeshisto = binedges[:-1] + 0.5 * binwidth
+
+        ax.set_yscale('log')
+        plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='simulated')
+
+        if(G.z > 5.5 and G.z <=6.5):
+            xaxes, BHnum_max, BHnum_min = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/BH_MF/Willott2010_z6.dat', unpack='True', usecols=(0,1,2))
+            ax.fill_between(np.log10(xaxes), BHnum_min, BHnum_max, alpha=0.1, facecolor='grey')
+
+        plt.ylabel(r'$\mathrm{number}\ \mathrm{density}$    $[\mathrm{Mpc}^{-3}]$')  # Set the y...
+        plt.xlabel(r'$\log\mathrm{M_{BH}}$')  # and the x-axis labels
+        plt.legend(loc='best')
+
+        outputFile = OutputDir + '22.BHmass_function_' + str(G.z) + OutputFormat
+        plt.savefig(outputFile)  # Save the figure
+        print 'Saved file to', outputFile
+        plt.close()
+
+        # Add this plot to our output list
+        OutputList.append(outputFile)
 
 # =================================================================
 
@@ -689,4 +642,4 @@ if __name__ == '__main__':
     res.QSOBHaccrete_distribution(G)
     res.QSOBHaccrete_function(G)
     res.QSOluminosity_function(G)
-    # res.BHaccretion_time(G)
+    res.BHmass_function(G)

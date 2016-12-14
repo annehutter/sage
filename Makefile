@@ -17,7 +17,8 @@ OBJS   = 	./code/main.o \
 			./code/model_mergers.o \
 			./code/model_misc.o \
 			./code/model_trackBHgrowth.o \
-			./code/model_quasars.o
+			./code/model_quasars.o \
+			./code/model_BHaccretion.o
 
 INCL   =	./code/core_allvars.h  \
 			./code/core_proto.h  \

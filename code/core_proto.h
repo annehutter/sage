@@ -51,19 +51,27 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
 void check_disk_instability(int p, int centralgal, int halonr, double time, double dt, int step);
 
 void track_BHgrowth(int merger_centralgal, int p, double BHaccrete, double time);
+
+void accreteOnBH_EddingtonLimited(double BHmass, double BHaccrete, double rad_efficiency, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity);
+void accreteOnBH_EddingtonLimited_redshift(double BHmass, double BHaccrete, double redshift, double rad_efficiency, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity);
+void accreteOnBH_Hopkins(double BHmass, double BHaccrete, double rad_efficiency, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity);
+void accreteOnBH_(double mass, double BHmass, double BHaccrete, double temperature, double gamma, double mu, double rad_efficiency, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity);
+
 double getBHaccretionRate(double BHmass, double rho, double temperature, double gamma, double mu, double fEdd, double rad_efficiency, double dt);
 double getBHaccretionMass(double BHmass, double rho, double temperature, double gamma, double mu, double fEdd, double rad_efficiency, double dt);
 double getBondiRate(double BHmass, double rho, double temperature, double gamma, double mu);
+double getEddRate(double BHmass);
 double compute_fEdd(double BHmass, double rho, double temperature, double gamma, double mu, double fEdd, double rad_efficiency, double dt);
 double getBHaccretionRate_EddingtonLimited(double BHmass, double fEdd, double rad_efficiency, double dt);
 double getBHaccretionMass_EddingtonLimited(double BHmass, double fEdd, double rad_efficiency, double dt);
+double getPeakTime_EddingtonLimited(double BHmass, double fEdd, double rad_efficiency, double BHaccreteMassEdd);
 double getBHaccretionRate_Bondi(double BHmass, double rho, double temperature, double gamma, double mu);
 double getBHaccretionMass_Bondi(double BHmass, double rho, double temperature, double gamma, double mu, double dt);
+double getPeakTime_Bondi(double BHmass, double rho, double temperature, double gamma, double mu, double BHaccretionMass);
 double getLuminosity(double BHaccretionRate, double rad_efficiency, double BHmass, double rho, double temperature, double gamma, double mu, double fEdd);
 double getEddingtonLuminosity(double BHmass);
 double getLuminosity_radEfficient(double BHaccretionRate, double rad_efficiency);
 double getLuminosity_radInefficient(double BHmass, double fEdd);
-double getPeakTime(double BHmass, double fEdd, double rad_efficiency, double BHaccreteMassEdd);
 double getBHaccretionRate_Hopkins(double BHmass, double rad_efficiency, double BHaccrete, double F, double dt);
 double getBHaccretionMass_Hopkins(double BHmass, double rad_efficiency, double BHaccrete, double F, double dt);
 double getLuminosity_Hopkins(double BHmass, double rad_efficiency, double BHaccrete, double F, double dt);

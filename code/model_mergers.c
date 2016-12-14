@@ -149,11 +149,8 @@ void grow_black_hole_trackBHgrowth(int merger_centralgal, int p, double mass_rat
 
 void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double mass_ratio, double time, double dt)
 {
-  double BHaccrete, BHaccretionRate, BHaccretionMass;
-  double BHaccretionMassEdd, fEdd = 1.;
-  double Luminosity;
-  double Mpeak, dt_peak, F;
-  double GasRho = 0.;
+  double BHaccrete = 0., BHaccretionRate = 0., BHaccretionMass = 0.;
+  double Luminosity = 0.;
   double metallicity;
 
   if(Gal[merger_centralgal].ColdGas > 0.0)
@@ -173,6 +170,27 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
 
     // 2) obtain BH accreted in timestep & luminosity (this is model dependent!)
 
+    if(BHaccrete > 0.)
+    {
+      switch(ContinuousAccretionOn)
+      {
+        case 1:
+          accreteOnBH_EddingtonLimited(Gal[merger_centralgal].BlackHoleMass, BHaccrete, QuasarRadEfficiency, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity);
+          break;
+        case 2:
+          accreteOnBH_EddingtonLimited_redshift(Gal[merger_centralgal].BlackHoleMass, BHaccrete, ZZ[Gal[merger_centralgal].SnapNum], QuasarRadEfficiency, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity);
+          break;
+        case 3:
+          accreteOnBH_Hopkins(Gal[merger_centralgal].BlackHoleMass, BHaccrete, QuasarRadEfficiency, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity);
+          break;
+        case 4:
+          accreteOnBH_(Gal[merger_centralgal].Mvir, Gal[merger_centralgal].BlackHoleMass, BHaccrete, GasTemperature, GasGamma, GasMu, QuasarRadEfficiency, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity);
+          break;
+        default:
+          break;
+      }
+    }
+    #if 0
     if(ContinuousAccretionOn == 1  && BHaccrete > 0.)
     {
       // Eddington limited case
@@ -180,7 +198,7 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
       BHaccretionMassEdd = getBHaccretionMass_EddingtonLimited(Gal[merger_centralgal].BlackHoleMass, fEdd, QuasarRadEfficiency, dt);
       if(BHaccretionMassEdd - Gal[merger_centralgal].BlackHoleMass > BHaccrete * (1. - QuasarRadEfficiency))
       {
-        dt_peak = getPeakTime(Gal[merger_centralgal].BlackHoleMass, fEdd, QuasarRadEfficiency, BHaccrete * (1. - QuasarRadEfficiency));
+        dt_peak = getPeakTime_EddingtonLimited(Gal[merger_centralgal].BlackHoleMass, fEdd, QuasarRadEfficiency, BHaccrete * (1. - QuasarRadEfficiency));
       }else{
         dt_peak = dt;
       }
@@ -199,7 +217,7 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
       BHaccretionMassEdd = getBHaccretionMass_EddingtonLimited(Gal[merger_centralgal].BlackHoleMass, fEdd, QuasarRadEfficiency, dt);
       if(BHaccretionMassEdd - Gal[merger_centralgal].BlackHoleMass > BHaccrete * (1. - QuasarRadEfficiency))
       {
-        dt_peak = getPeakTime(Gal[merger_centralgal].BlackHoleMass, fEdd, QuasarRadEfficiency, BHaccrete * (1. - QuasarRadEfficiency));
+        dt_peak = getPeakTime_EddingtonLimited(Gal[merger_centralgal].BlackHoleMass, fEdd, QuasarRadEfficiency, BHaccrete * (1. - QuasarRadEfficiency));
       }else{
         dt_peak = dt;
       }
@@ -224,7 +242,7 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
         BHaccretionMass = getBHaccretionMass_EddingtonLimited(Gal[merger_centralgal].BlackHoleMass, fEdd, QuasarRadEfficiency, dt);
         Luminosity = getLuminosity_radEfficient(BHaccretionRate, QuasarRadEfficiency);
       }else{
-        dt_peak = getPeakTime(Gal[merger_centralgal].BlackHoleMass, fEdd, QuasarRadEfficiency, F * BHaccrete * (1. - QuasarRadEfficiency));
+        dt_peak = getPeakTime_EddingtonLimited(Gal[merger_centralgal].BlackHoleMass, fEdd, QuasarRadEfficiency, F * BHaccrete * (1. - QuasarRadEfficiency));
         BHaccretionRate = getBHaccretionRate_Hopkins(Gal[merger_centralgal].BlackHoleMass, QuasarRadEfficiency, BHaccrete, F, dt-dt_peak);
         BHaccretionMass = getBHaccretionMass_Hopkins(Gal[merger_centralgal].BlackHoleMass, QuasarRadEfficiency, BHaccrete, F, dt-dt_peak);
         Luminosity = getLuminosity_Hopkins(Gal[merger_centralgal].BlackHoleMass, QuasarRadEfficiency, BHaccrete, F, dt-dt_peak);
@@ -235,9 +253,20 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
     else if(ContinuousAccretionOn == 4  && BHaccrete > 0.)
     {
       // Hirschmann 2014 model
+      GasRho = GasMu * PROTONMASS * 9.5e5 * (GasTemperature/1.e4)*(GasTemperature/1.e4) / ((Gal[merger_centralgal].BlackHoleMass+1.e-8*Hubble_h)*(Gal[merger_centralgal].BlackHoleMass+1.e-8*Hubble_h)*1.e12);
+      printf("\nrho = %e\t%e\t%e\n", GasRho, GasTemperature, Gal[merger_centralgal].BlackHoleMass*1.e6);
       fEdd = compute_fEdd(Gal[merger_centralgal].BlackHoleMass, GasRho, GasTemperature, GasGamma, GasMu,  fEdd, QuasarRadEfficiency, dt);
-      BHaccretionRate = getBHaccretionRate(Gal[merger_centralgal].BlackHoleMass, GasRho, GasTemperature, GasGamma, GasMu, fEdd, QuasarRadEfficiency, dt);
-      BHaccretionMass = getBHaccretionMass(Gal[merger_centralgal].BlackHoleMass, GasRho, GasTemperature, GasGamma, GasMu, fEdd, QuasarRadEfficiency, dt);
+      printf("fEdd = %e\n", fEdd);
+      double BHaccretionMass_tmp = getBHaccretionMass(Gal[merger_centralgal].BlackHoleMass, GasRho, GasTemperature, GasGamma, GasMu, 1., QuasarRadEfficiency, dt);
+      if(fEdd < 1.){
+          dt_peak = getPeakTime_Bondi(Gal[merger_centralgal].BlackHoleMass, GasRho, GasTemperature, GasGamma, GasMu, BHaccretionMass_tmp);
+      }else{
+          dt_peak = getPeakTime_EddingtonLimited(Gal[merger_centralgal].BlackHoleMass, fEdd, QuasarRadEfficiency, BHaccretionMass_tmp);
+      }
+      if(dt_peak < dt)  dt = dt_peak;
+
+      BHaccretionRate = getBHaccretionRate(Gal[merger_centralgal].BlackHoleMass, GasRho, GasTemperature, GasGamma, GasMu, 1., QuasarRadEfficiency, dt);
+      BHaccretionMass = getBHaccretionMass(Gal[merger_centralgal].BlackHoleMass, GasRho, GasTemperature, GasGamma, GasMu, 1., QuasarRadEfficiency, dt);
       Luminosity = getLuminosity(BHaccretionRate, QuasarRadEfficiency, Gal[merger_centralgal].BlackHoleMass, GasRho, GasTemperature, GasGamma, GasMu, fEdd);
     }
     else
@@ -246,7 +275,7 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
       BHaccretionMass = 0.;
       Luminosity = 0.;
     }
-
+#endif
     Gal[merger_centralgal].QSOBHaccretionRate = BHaccretionRate;
     Gal[merger_centralgal].QSOBHaccretionMass = BHaccretionMass;
     Gal[merger_centralgal].QSOLuminosity = Luminosity;
