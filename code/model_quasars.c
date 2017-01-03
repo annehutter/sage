@@ -8,80 +8,195 @@
 #include "core_allvars.h"
 #include "core_proto.h"
 
+//--------------------------------------------------
+//  SUB EDDINGTON DENSITY (where Bondi rate == Eddington rate)
+//--------------------------------------------------
+
+double getSubEddDensity(double BHmass, double cs, double gamma, double mu, double rad_efficiency)
+{
+    double massFact = 1.e10 / Hubble_h;
+
+    double lambdaB = 1.12;
+    if(gamma > 1.1) lambdaB = 0.25;
+    lambdaB = lambdaB / 1.12;
+
+    double temperature = 1.e-4 * (cs * cs * mu / (gamma * GAS_CONST));
+    BHmass = BHmass * massFact;
+    rad_efficiency = rad_efficiency * 10.;
+
+    // result in cm^-3
+    double result = 4.e6 / (BHmass * temperature * sqrt(temperature) * rad_efficiency);
+    return result;
+}
 
 //--------------------------------------------------
-// EDDINGTON LIMITED & BONDI MODEL (MARULLI 2009 & HIRSCHMANN 2014)
+// EDDINGTON DENSITY (where Bondi rate (with radiative feedback) == Eddington rate)
 //--------------------------------------------------
 
-// ACCRETION MODEL
-
-double getBHaccretionRate(double BHmass, double rho, double temperature, double gamma, double mu, double fEdd, double rad_efficiency, double dt)
+double getEddingtonDensity(double BHmass, double cs, double gamma, double mu, double meanPhotEnergy, double rad_efficiency)
 {
-    if(BHmass <= 0.){
-        BHmass = 1.e-8 * Hubble_h;
-    }
-    double BondiRate = getBHaccretionRate_Bondi(BHmass, rho, temperature, gamma, mu);
-    double EddRate = getBHaccretionRate_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt);
+    double massFact = 1.e10 / Hubble_h;
 
-    if(BondiRate < EddRate || BondiRate > 5000. * EddRate){
-        return BondiRate;
-    }else{
-        return EddRate;
-    }
+    double lambdaB = 1.12;
+    if(gamma > 1.1) lambdaB = 0.25;
+    lambdaB = lambdaB / 1.12;
+
+    double temperature = 1.e-4 * (cs * cs * mu / (gamma * GAS_CONST));
+    BHmass = BHmass * massFact;
+    rad_efficiency = rad_efficiency * 10.;
+
+    // result in cm^-3
+    double result = 4.e8 / (BHmass * temperature * rad_efficiency);
+    return result;
 }
 
-double getBHaccretionMass(double BHmass, double rho, double temperature, double gamma, double mu, double fEdd, double rad_efficiency, double dt)
+//--------------------------------------------------
+// CRITICAL DENSITY (where  Stroemgren radius approaches the effective accretion radius)
+// (period of accretion burst correlates with Stroemgren radius; below gas depletion is dominated by accretion onto BH; above outflows dominate)
+//--------------------------------------------------
+
+double getCriticalDensity(double BHmass, double cs, double gamma, double mu, double meanPhotEnergy)
 {
-    if(BHmass <= 0.){
-        BHmass = 1.e-8 * Hubble_h;
-    }
-    double BondiRate = getBHaccretionRate_Bondi(BHmass, rho, temperature, gamma, mu);
-    double EddRate = getBHaccretionRate_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt);
+    double massFact = 1.e10 / Hubble_h;
+    double lambdaB = 1.12;
+    if(gamma > 1.1) lambdaB = 0.25;
+    lambdaB = lambdaB / 1.12;
 
-    // printf("fEdd = %e\nBHmass = %e\tBondiRate = %e\t EddRate = %e\n", fEdd, BHmass, BondiRate, EddRate);
+    meanPhotEnergy = meanPhotEnergy / 41.;
+    double temperature = 1.e-4 * (cs * cs * mu / (gamma * GAS_CONST));
+    BHmass = BHmass * massFact;
 
-    if(BondiRate < EddRate || BondiRate > 5000. * EddRate){
-        return getBHaccretionMass_Bondi(BHmass, rho, temperature, gamma, mu, dt);
-    }else{
-        return getBHaccretionMass_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt);
-    }
+    // result in cm^-3
+    double result = 5.e8 / (BHmass * pow(meanPhotEnergy, 0.5625));// * sqrt(lambdaB)) * temperature;
+    return result;
 }
 
-double getBondiRate(double BHmass, double rho, double temperature, double gamma, double mu)
+//--------------------------------------------------
+//  SUPER EDDINGTON DENSITY (where Bondi rate == Eddington rate)
+//--------------------------------------------------
+
+double getSuperEddDensity(double BHmass, double cs, double gamma, double mu, double meanPhotEnergy, double rad_efficiency)
 {
-    double cs = sqrt(gamma * GAS_CONST * temperature / mu);
-    printf("%e\n", BHmass * BHmass * 1.e20 * rho);
-    return 4. * PI * GRAVITY * GRAVITY * BHmass * BHmass * 1.e20 * rho / (cs * cs * cs * Hubble_h * Hubble_h) * SOLAR_MASS * SEC_PER_YEAR;
+    double massFact = 1.e10 / Hubble_h;
+
+    double lambdaB = 1.12;
+    if(gamma > 1.1) lambdaB = 0.25;
+    lambdaB = lambdaB / 1.12;
+
+    meanPhotEnergy = meanPhotEnergy / 41.;
+    double temperature = 1.e-4 * (cs * cs * mu / (gamma * GAS_CONST));
+    BHmass = BHmass * massFact;
+    rad_efficiency = rad_efficiency * 10.;
+
+    // result in cm^-3
+    double result = 1.e10 / (BHmass * rad_efficiency * temperature * sqrt(temperature)) * pow(meanPhotEnergy, 0.42);    // only part not from Park but from Inayoshi 2016
+    return result;
 }
+
+//--------------------------------------------------
+// DENSITY AT BONDI RADIUS
+//--------------------------------------------------
+
+double getRhoAtBondiRadius(double BHmass, double GasMass, double Mvir, double cs, double gamma, double parameter)
+{
+    double massFact = 1.e10 / Hubble_h;
+    double rvir = GRAVITY * Mvir * massFact / (cs * cs);
+    double rBondi_div_rc = BHmass / (parameter * Mvir);
+
+    double factor = 1. / (pow(parameter, 3) * (1./parameter - atan(1./parameter)));
+    
+    double lambdaB = 1.12;
+    if(gamma > 1.1) lambdaB = 0.25;
+
+    // result in g cm^-3
+    double result = lambdaB * GasMass * massFact / (4. * PI * pow(rvir, 3) * SOLAR_MASS * SOLAR_MASS * (1. + rBondi_div_rc * rBondi_div_rc)) * factor;
+    return result;
+}
+
+double getDensityAtBondiRadius(double BHmass, double GasMass, double Mvir, double cs, double gamma, double mu, double parameter)
+{
+    // result in g cm^-3
+    double result = getRhoAtBondiRadius(BHmass, GasMass, Mvir, cs, gamma, parameter);
+    // result in cm^-3
+    result = result / (mu * PROTONMASS);
+    return result;
+}
+
+//--------------------------------------------------
+// BONDI RATE
+//--------------------------------------------------
+
+double getBondiRate(double BHmass, double GasMass, double Mvir, double cs, double gamma, double parameter)
+{
+    double rho = getRhoAtBondiRadius(BHmass, GasMass, Mvir, cs, gamma, parameter);
+    double massFact = SOLAR_MASS * 1.e10 / Hubble_h;
+    double Grav_times_BHmass = GRAVITY * BHmass * massFact;
+
+    // result in g s^-1 * Msun^2
+    double result = 4. * PI * Grav_times_BHmass * Grav_times_BHmass * rho / (cs * cs * cs);
+    // result in Msun yr^-1
+    return result / SOLAR_MASS * SEC_PER_YEAR;
+}
+
+//--------------------------------------------------
+// EDDINGTON RATE
+//--------------------------------------------------
 
 double getEddRate(double BHmass)
 {
-    return 4. * PI * GRAVITY * BHmass * 1.e10 * PROTONMASS / (THOMSON_CS * C * Hubble_h) * SEC_PER_YEAR;
+    double massFact = 1.e10 / Hubble_h;
+
+    // result in g s^-1 * Msun
+    double result = 4. * PI * GRAVITY * BHmass * massFact * PROTONMASS / (THOMSON_CS * C);
+    // result in Msun yr^-1
+    return result * SEC_PER_YEAR;
 }
 
-double compute_fEdd(double BHmass, double rho, double temperature, double gamma, double mu, double fEdd, double rad_efficiency, double dt)
+
+//--------------------------------------------------
+// INFLOW RATE
+//--------------------------------------------------
+
+double getInflowRate(double cs)
 {
-    if(BHmass <= 0.){
-        BHmass = 1.e-8 * Hubble_h;
-    }
-
-    printf("rho = %e\n", rho);
-    double BondiRate = getBondiRate(BHmass, rho, temperature, gamma, mu);
-    double EddRate = getBHaccretionRate_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt);
-
-    printf("fEdd = %e\nBHmass = %e\tBondiRate = %e\t EddRate = %e\t%e\n", BondiRate / EddRate, BHmass, BondiRate, EddRate, getEddRate(BHmass));
-
-    return BondiRate / EddRate;
+    // result in g s^-1
+    double result = (cs * cs * cs) / GRAVITY;
+    // result in Msun yr^-1
+    return result / SOLAR_MASS * SEC_PER_YEAR;
 }
 
-// Eddington limited Accretion
+//#####################################################################################################
+
+//--------------------------------------------------
+// MASS WITHIN THE BONDI RADIUS
+//--------------------------------------------------
+
+double getBondiMass(double BHmass, double GasMass, double Mvir, double parameter)
+{
+    double BHmass_div_Mvir = BHmass / (Mvir * parameter);
+    double tmp = 1. / parameter;
+    double factor = BHmass_div_Mvir - atan(BHmass_div_Mvir);
+    double factor2 = tmp - atan(tmp);
+
+    double result = GasMass * factor / factor2;
+    // result in 1.e10/h Msun
+    return result;
+}
+
+//#####################################################################################################
+
+//--------------------------------------------------
+// EDDINGTON LIMITED ACCRETION MODEL
+//--------------------------------------------------
 
 double getBHaccretionRate_EddingtonLimited(double BHmass, double fEdd, double rad_efficiency, double dt)
 {
     double tmp = fEdd / (TEDD_YR * rad_efficiency) * (1. - rad_efficiency);
     double dt_yr = dt / (SEC_PER_YEAR * Hubble_h * CM_PER_KM) * CM_PER_MPC;
     if(BHmass == 0.) BHmass = 1.e-8 * Hubble_h;
-    return BHmass * 1.e10 / Hubble_h * tmp * exp(tmp * dt_yr);
+    double result = BHmass * 1.e10 / Hubble_h * tmp * exp(tmp * dt_yr);
+    // result in 1.e10/h Msun
+    return result;
 }
 
 double getBHaccretionMass_EddingtonLimited(double BHmass, double fEdd, double rad_efficiency, double dt)
@@ -91,80 +206,279 @@ double getBHaccretionMass_EddingtonLimited(double BHmass, double fEdd, double ra
     if(BHmass == 0.) BHmass = 1.e-8 * Hubble_h;
     // printf("Eddington: BHmass = %e\t fEdd = %e\t rad_efficiency = %e\t t = %e\n", BHmass*1.e10/Hubble_h, fEdd, rad_efficiency, dt_yr);
     // printf("Eddington: BHmass = %e\n", BHmass * exp(tmp * dt_yr)*1.e10/Hubble_h);
-    return BHmass * exp(tmp * dt_yr);
+    printf("tmp = %e\t dt_yr = %e\n", tmp, dt_yr);
+    double result = BHmass * (exp(tmp * dt_yr) - 1.);   
+    // result in 1.e10/h Msun
+    return result;
 }
 
-double getPeakTime_EddingtonLimited(double BHmass, double fEdd, double rad_efficiency, double BHaccretionMassEdd)
+double getPeakTime_EddingtonLimited(double BHmass, double fEdd, double rad_efficiency, double BHaccrete)
 {
   double tmp = fEdd / (TEDD_YR * rad_efficiency) * (1. - rad_efficiency);
-  double peakTime_yr = log((BHmass + BHaccretionMassEdd) / BHmass) / tmp;
+  double peakTime_yr = log((BHmass + BHaccrete) / BHmass) / tmp;
   double peakTime = peakTime_yr * (SEC_PER_YEAR * Hubble_h * CM_PER_KM) / CM_PER_MPC;
   return peakTime;
 }
 
-// Bondi Accretion
 
-double getBHaccretionRate_Bondi(double BHmass, double rho, double temperature, double gamma, double mu)
+//#####################################################################################################
+
+//--------------------------------------------------
+// BONDI ACCRETION MODEL
+//--------------------------------------------------
+
+double getBHaccretionRate_Bondi(double BHmass, double GasMass, double Mvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad)
 {
-    return getBondiRate(BHmass, rho, temperature, gamma, mu);
+    // in Msun yr^-1
+    double result = (1. - rad_efficiency) * lambdaRad * getBondiRate(BHmass, GasMass, Mvir, cs, gamma, parameter);
+    return result;
 }
 
-double getBHaccretionMass_Bondi(double BHmass, double rho, double temperature, double gamma, double mu, double dt)
+double getBHaccretionMass_Bondi(double BHmass, double GasMass, double Mvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad, double dt)
 {
-    double cs = sqrt(gamma * GAS_CONST * temperature / mu);
-    double tmp = 4. * PI * GRAVITY * GRAVITY * rho / (cs * cs * cs);
+    double massFact = 1.e10 / Hubble_h;
+    double BondiRate = getBondiRate(BHmass, GasMass, Mvir, cs, gamma, parameter);
+    double dt_yr = dt / (SEC_PER_YEAR * Hubble_h * CM_PER_KM) * CM_PER_MPC;
 
-    double dt_sec = dt / (Hubble_h * CM_PER_KM) * CM_PER_MPC;
-    double tmp2 = dt_sec * tmp * BHmass * 1.e10 / Hubble_h * SOLAR_MASS;
-
-    if(tmp2 < 1.)
-    {
-        return BHmass / ( 1. - tmp2 );
-    }else{
-        return 1.e20;
-    }
+    // in Msun
+    double result = (1. - rad_efficiency) * lambdaRad * BondiRate * dt_yr;
+    // in 1.e10 h^-1 Msun
+    result = result / massFact;
+    return result;
 }
 
-double getPeakTime_Bondi(double BHmass, double rho, double temperature, double gamma, double mu, double BHaccretionMass)
+double getPeakTime_Bondi(double BHmass, double GasMass, double Mvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad, double BHaccrete)
 {
-    if(BHmass <= 0.){
-        BHmass = 1.e-8 * Hubble_h;
-    }
-    double cs = sqrt(gamma * GAS_CONST * temperature / mu);
-    double tmp = 4. * PI * GRAVITY * GRAVITY * rho / (cs * cs * cs);
-    double peakTime_yr = (1./BHmass - 1./(BHmass + BHaccretionMass)) * 1.e-10 * Hubble_h / (SOLAR_MASS * tmp * SEC_PER_YEAR);
+    double BondiRate = getBondiRate(BHmass, GasMass, Mvir, cs, gamma, parameter);
+    double massFact = 1.e10 / Hubble_h;
+
+    double peakTime_yr = BHaccrete * massFact / ((1. - rad_efficiency) * lambdaRad * BondiRate);
     double peakTime = peakTime_yr * (SEC_PER_YEAR * Hubble_h * CM_PER_KM) / CM_PER_MPC;
+    printf("dt_peak = %e\n", peakTime);
     return peakTime;
 }
 
-// LUMINOSITY MODEL
+//#####################################################################################################
 
-double getLuminosity(double BHaccretionRate, double rad_efficiency, double BHmass, double rho, double temperature, double gamma, double mu, double fEdd)
+//--------------------------------------------------
+// INFLOW ACCRETION MODEL
+//--------------------------------------------------
+
+double getBHaccretionRate_Inflow(double cs, double rad_efficiency)
 {
-    if(fEdd > 0.1)
-    {
-        return getLuminosity_radEfficient(BHaccretionRate, rad_efficiency);
-    }else{
-        return getLuminosity_radInefficient(BHmass, fEdd);
-    }
+    // in Msun yr^-1
+    double result = (1. - rad_efficiency) * getInflowRate(cs);
+    return result;
 }
 
-double getEddingtonLuminosity(double BHmass)
+double getBHaccretionMass_Inflow(double BHmass, double cs, double rad_efficiency, double dt)
 {
-    return 4. * PI * GRAVITY * BHmass * PROTONMASS * C / THOMSON_CS;
+    double massFact = 1.e10 / Hubble_h;
+    double InflowRate = getInflowRate(cs);
+    double dt_yr = dt / (SEC_PER_YEAR * Hubble_h * CM_PER_KM) * CM_PER_MPC;
+
+    // in Msun
+    double result = (1. - rad_efficiency) * InflowRate * dt_yr;
+    // in 1.e10 h^-1 Msun
+    result = result / massFact;
+    return result;
+}
+
+double getPeakTime_Inflow(double cs, double rad_efficiency, double BHaccrete)
+{
+    double InflowRate = getInflowRate(cs);
+    double massFact = 1.e10 / Hubble_h;
+
+    double peakTime_yr = BHaccrete * massFact / ((1. - rad_efficiency) * InflowRate);
+    double peakTime = peakTime_yr * (SEC_PER_YEAR * Hubble_h * CM_PER_KM) / CM_PER_MPC;
+    printf("dt_peak = %e\n", peakTime);
+    return peakTime;
+}
+
+//#####################################################################################################
+
+//--------------------------------------------------
+// PARK ACCRETION MODELS
+//--------------------------------------------------
+
+double getMeanPhotEnergy(double spectralIndex)
+{
+    double maxEnergy = 0.2e3;
+
+    double result;
+    if(spectralIndex > 1.){
+          result = 13.6 * spectralIndex / (spectralIndex - 1.);
+      }else if(spectralIndex == 1.){
+          result = 13.6 * log(maxEnergy / 13.6);
+      }else{
+          result = 13.6 * spectralIndex / (1. - spectralIndex) * pow(maxEnergy / 13.6, spectralIndex);
+      }
+    return result;
+}
+
+double getLambda_rad(double BHmass, double density, double cs, double gamma, double mu, double meanPhotEnergy)
+{
+    double massFact = 1.e10 / Hubble_h;
+    BHmass = BHmass * massFact;                                              // in Msun
+    double temperature = 1.e-4 * (cs * cs * mu / (gamma * GAS_CONST));       // in K
+    meanPhotEnergy = meanPhotEnergy / 41.;                            // in eV
+
+    double result = 0.01 * pow(temperature, 2.5) / meanPhotEnergy;
+    if(BHmass * density <= 1.e7){
+        result = result * sqrt(density * 1.e-5);
+    }
+    return result;
+}
+
+double getFduty(double density, double density_crit, double cs, double gamma, double mu)
+{
+    double temperature = 1.e-4 * (cs * cs * mu / (gamma * GAS_CONST));       // in K
+
+    double result;
+    if(density > density_crit){
+        result = 0.5;
+    }else{
+        result = 0.06 * sqrt(temperature);
+    }
+    return result;
+}
+
+double getTcycle(double BHmass, double density, double density_crit, double meanPhotEnergy, double rad_efficiency)
+{
+    double massFact = 1.e10 / Hubble_h;
+    BHmass = BHmass * massFact;                                              // in Msun
+    rad_efficiency = rad_efficiency * 10.;
+    meanPhotEnergy = meanPhotEnergy / 41.;                                   // in eV
+
+    double result;
+    if(density > density_crit){
+        result = 1.e9 * rad_efficiency / density * pow(meanPhotEnergy, -0.875);                               // in yr
+    }else{
+        result = 1.e5 * pow(BHmass * BHmass * rad_efficiency / density, 1./3.) * pow(meanPhotEnergy, -0.75);  // in yr
+    }
+    return result;
+}
+
+double getBHmassBoundary(double GasMass, double Mvir, double cs, double mu, double parameter, double BoundaryValue)
+{
+    double massFact = 1.e10 / Hubble_h;
+    double tmp = (cs * cs) / GRAVITY;
+    double factor = (1./parameter - atan(1./parameter));
+    
+    // in Msun
+    double result = GasMass * tmp * tmp * tmp * factor / (4. * PI * Mvir * mu * PROTONMASS  * BoundaryValue * SOLAR_MASS * SOLAR_MASS);
+//     printf("result = %e\t BoundrayValue = %e\t tmp = %e\t factor = %e\n", result, BoundaryValue, tmp, factor);
+    // in 1.e10 h^-1 Msun
+    result = result / massFact;
+    return result;
+}
+
+double getLmaxDivLEdd(double BHmass, double density, double density_crit, double cs, double gamma, double mu, double meanPhotEnergy, double rad_efficiency)
+{
+    double massFact = 1.e10 / Hubble_h;
+    BHmass = BHmass * massFact;                                              // in Msun
+    double temperature = 1.e-4 * (cs * cs * mu / (gamma * GAS_CONST));       // in K
+    rad_efficiency = rad_efficiency * 10.;
+    meanPhotEnergy = meanPhotEnergy / 41.;                                   // in eV
+
+    double result;
+    if(density > density_crit){
+        result = 5.e-6 * density * rad_efficiency * sqrt(temperature) / meanPhotEnergy;  
+    }else{
+        result = 6.e-7 * density * rad_efficiency * temperature / meanPhotEnergy; 
+    }
+
+    if(result > 1.) result = 1.;
+    
+    return result;
+}
+
+//#####################################################################################################
+
+//--------------------------------------------------
+// ACCRETION PARAMETER
+//--------------------------------------------------
+
+double getMaccr(double BHaccretionRate, double BHmass)
+{
+    double EddRate = getEddRate(BHmass);
+    double result = BHaccretionRate / EddRate;
+    return result;
+}
+
+//#####################################################################################################
+
+//--------------------------------------------------
+// LUMINOSITY MODELS
+//--------------------------------------------------
+
+double getEddLuminosity(double BHmass)
+{
+   double massFact = 1.e10 / Hubble_h;
+
+    // result in erg s^-1 Msun^-1
+    double result = 4. * PI * GRAVITY * BHmass * massFact * PROTONMASS * C / THOMSON_CS;
+    return result * SEC_PER_YEAR;
 }
 
 double getLuminosity_radEfficient(double BHaccretionRate, double rad_efficiency)
 {
-    return rad_efficiency / (1. - rad_efficiency) * BHaccretionRate * C * C;// * SOLAR_MASS / SEC_PER_YEAR;
+    double result = rad_efficiency / (1. - rad_efficiency) * BHaccretionRate * C * C;// * SOLAR_MASS / SEC_PER_YEAR;
+    return result;
 }
 
-double getLuminosity_radInefficient(double BHmass, double fEdd)
+double getLuminosity_radIneff_log(double BHaccretionRate, double maccr, double boundary)
 {
-    double EddRate = getEddingtonLuminosity(BHmass * 1.e10 / Hubble_h);
-    return 0.1 * EddRate * fEdd * fEdd * 100.;
+    double rad_efficiency;
+    if(maccr > boundary) rad_efficiency = 2./maccr * (1. + log(maccr / boundary));
+    else rad_efficiency = 1./maccr;
+    
+    double result = rad_efficiency / (1. - rad_efficiency) * BHaccretionRate * C * C;
+    return result;
 }
 
+double getLuminosity_radIneff_quot(double BHaccretionRate, double maccr, double boundary)
+{
+    double rad_efficiency = boundary / (10. + boundary * maccr);
+    
+    double result = rad_efficiency / (1. - rad_efficiency) * BHaccretionRate * C * C;
+    return result;
+}
+
+double getLuminosity_radIneff_lowMaccr(double BHmass, double maccr)
+{
+    double EddRate = getEddLuminosity(BHmass * 1.e10 / Hubble_h);
+    return 0.1 * EddRate * maccr * maccr;
+}
+
+double getLuminosity_oscillations(double BHmass, double density, double density_crit, double cs, double gamma, double mu, double meanPhotEnergy, double rad_efficiency)
+{
+    double LEdd = getEddLuminosity(BHmass);
+    double Lmax = getLmaxDivLEdd(BHmass, density, density_crit, cs, gamma, mu, meanPhotEnergy, rad_efficiency) * LEdd;
+    double fduty = getFduty(density, density_crit, cs, gamma, mu);
+    double tcycle = getTcycle(BHmass, density, density_crit, meanPhotEnergy, rad_efficiency);
+    
+    srand((unsigned)time(NULL));
+    double t = tcycle * ((double)rand()/(double)RAND_MAX);
+    
+    double result = Lmax * exp(t / (fduty * tcycle));
+    printf("L = %e\n", result);
+    
+    return result;
+}
+
+double getLuminosity_Sadowski(double BHmass, double BHspin, double BHaccretionRate)
+{
+    double Avar = pow(0.9663 - 0.9292 * BHspin, -0.5639);
+    double Bvar = pow(4.627 - 4.445 * BHspin, -0.5524);
+    double Cvar = pow(827.3 - 718.1 * BHspin, -0.7060);
+
+    double tmp = (16. * getEddRate(BHmass)) / BHaccretionRate;
+
+    return Avar * ( 0.985 / (tmp + Bvar) + 0.015 / (tmp + Cvar)) * getEddLuminosity(BHmass);
+}
+
+//#####################################################################################################
 
 //--------------------------------------------------
 // MARULLI 2009 - HOPKINS MODEL
@@ -173,7 +487,7 @@ double getBHaccretionRate_Hopkins(double BHmass, double rad_efficiency, double B
 {
   double dt_yr = dt / (SEC_PER_YEAR * Hubble_h * CM_PER_KM) * CM_PER_MPC;
   double BHpeak = BHmass + F * BHaccrete * (1.-rad_efficiency);
-  double Lpeak = getEddingtonLuminosity(BHpeak * 1.e10 / Hubble_h);
+  double Lpeak = getEddLuminosity(BHpeak * 1.e10 / Hubble_h);
   double alpha = -0.95 + 0.32 * log10(Lpeak * SOLAR_MASS/ (1.e12 * SOLAR_LUM));
   if(alpha > -0.2) alpha = -0.2;
 
@@ -192,7 +506,7 @@ double getBHaccretionMass_Hopkins(double BHmass, double rad_efficiency, double B
 {
   double dt_yr = dt / (SEC_PER_YEAR * Hubble_h * CM_PER_KM) * CM_PER_MPC;
   double BHpeak = BHmass + F * BHaccrete * (1.-rad_efficiency);
-  double Lpeak = getEddingtonLuminosity(BHpeak * 1.e10 / Hubble_h);
+  double Lpeak = getEddLuminosity(BHpeak * 1.e10 / Hubble_h);
   double alpha = -0.95 + 0.32 * log10(Lpeak * SOLAR_MASS / (1.e12 * SOLAR_LUM));
   if(alpha > -0.2 || Lpeak * SOLAR_MASS > 1.e14 * SOLAR_LUM) alpha = -0.2;
 
@@ -203,7 +517,7 @@ double getBHaccretionMass_Hopkins(double BHmass, double rad_efficiency, double B
   double Bvar = tmp2 + 1.;
   double Cvar = tmp / 1.e9;
 
-  double BHaccretionMass = BHpeak + Avar / (Bvar * Cvar) * (pow(1. + Cvar * dt_yr, Bvar) - 1.);
+  double BHaccretionMass = BHpeak + Avar / (Bvar * Cvar) * (pow(1. + Cvar * dt_yr, Bvar) - 1.) - BHmass;
   return BHaccretionMass;
 }
 
@@ -211,7 +525,7 @@ double getLuminosity_Hopkins(double BHmass, double rad_efficiency, double BHaccr
 {
   double dt_yr = dt / (SEC_PER_YEAR * Hubble_h * CM_PER_KM) * CM_PER_MPC;
   double BHpeak = BHmass + F * BHaccrete * (1.-rad_efficiency);
-  double Lpeak = getEddingtonLuminosity(BHpeak * 1.e10 / Hubble_h);
+  double Lpeak = getEddLuminosity(BHpeak * 1.e10 / Hubble_h);
   double alpha = -0.95 + 0.32 * log10(Lpeak * SOLAR_MASS / (1.e12 * SOLAR_LUM));
   if(alpha > -0.2) alpha = -0.2;
 
@@ -224,6 +538,9 @@ double getLuminosity_Hopkins(double BHmass, double rad_efficiency, double BHaccr
   double luminosity = Lpeak * pow(1. + Cvar * dt_yr, Bvar - 1.) * SEC_PER_YEAR;
   return luminosity;
 }
+
+
+
 
 // //--------------------------------------------------
 // // PEZULLI 2016 MODEL

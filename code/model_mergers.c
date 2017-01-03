@@ -152,6 +152,7 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
   double BHaccrete = 0., BHaccretionRate = 0., BHaccretionMass = 0.;
   double Luminosity = 0.;
   double metallicity;
+  double currentMvir, currentRvir, currentVvir;
 
   if(Gal[merger_centralgal].ColdGas > 0.0)
   {
@@ -160,8 +161,9 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
     if(Gal[merger_centralgal].hasJustMerged == 1)
     {
       BHaccrete = BlackHoleGrowthRate * mass_ratio /
-                  (1.0 + pow(280.0 / Gal[merger_centralgal].Vvir, 2.0)) * Gal[merger_centralgal].ColdGas;
+                  (1.0 + pow(280.0 / Gal[merger_centralgal].Vvir, 2.0)) * Gal[merger_centralgal].ColdGas;// * (1. + ZZ[Halo[Gal[merger_centralgal].HaloNr].SnapNum]);
     }
+    printf("BHaccrete = %e \t ColdaGasToAccrete = %e\n", BHaccrete, Gal[merger_centralgal].ColdGasToAccrete);
     BHaccrete += Gal[merger_centralgal].ColdGasToAccrete;
 
     // cannot accrete more gas than is available!
@@ -170,7 +172,12 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
 
     // 2) obtain BH accreted in timestep & luminosity (this is model dependent!)
 
-    if(BHaccrete > 0.)
+    currentMvir = Gal[merger_centralgal].Mvir;// + Gal[p].deltaMvir * (1.0 - ((double)step + 1.0) / (double)STEPS);
+    currentRvir = get_virial_radius_evolving(merger_centralgal, currentMvir);
+    currentVvir = get_virial_velocity_evolving(currentMvir, currentRvir);
+
+    printf("time = %e\tdt = %e\tRvir = %e\tMvir=%e\tVvir = %e\t BHmass = %e \t BHaccrete = %e\n", time, dt, currentRvir, currentMvir, currentVvir, Gal[merger_centralgal].BlackHoleMass, BHaccrete);
+    if(BHaccrete > 0. && currentMvir > 0.)
     {
       switch(ContinuousAccretionOn)
       {
@@ -184,8 +191,10 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
           accreteOnBH_Hopkins(Gal[merger_centralgal].BlackHoleMass, BHaccrete, QuasarRadEfficiency, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity);
           break;
         case 4:
-          accreteOnBH_(Gal[merger_centralgal].Mvir, Gal[merger_centralgal].BlackHoleMass, BHaccrete, GasTemperature, GasGamma, GasMu, QuasarRadEfficiency, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity);
+          accreteOnBH_Ryu(Gal[merger_centralgal].BlackHoleMass, Gal[merger_centralgal].HotGas, currentMvir, currentVvir*UnitVelocity_in_cm_per_s*0.58, MaxInflowVelocity, GasGamma, QuasarRadEfficiency, GasProfileParameter, BHaccrete, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity);
           break;
+        case 5:
+          accreteOnBH_Park(Gal[merger_centralgal].BlackHoleMass, Gal[merger_centralgal].HotGas, currentMvir, currentVvir*UnitVelocity_in_cm_per_s*0.58, MaxInflowVelocity, GasGamma, GasMu, QuasarRadEfficiency, GasProfileParameter, BHaccrete, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity);
         default:
           break;
       }
@@ -293,6 +302,11 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
     if(TrackBHgrowthOn == 1 && Gal[merger_centralgal].hasJustMerged == 1)
     {
         track_BHgrowth(merger_centralgal, p, BHaccrete, time);
+    }
+    
+    if(BHaccrete > 0. && Gal[merger_centralgal].BlackHoleMass < 1.e-8*Hubble_h)
+    {
+        Gal[merger_centralgal].BlackHoleMass = 1.e-8 * Hubble_h;
     }
 
     // 3) update values

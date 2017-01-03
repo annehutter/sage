@@ -178,8 +178,8 @@ void read_parameter_file(char *fname)
   addr[nt] = &QuasarRadEfficiency;
   id[nt++] = DOUBLE;
 
-  strcpy(tag[nt], "GasTemperature");
-  addr[nt] = &GasTemperature;
+  strcpy(tag[nt], "QuasarSpectralIndex");
+  addr[nt] = &QuasarSpectralIndex;
   id[nt++] = DOUBLE;
 
   strcpy(tag[nt], "GasGamma");
@@ -190,6 +190,14 @@ void read_parameter_file(char *fname)
   addr[nt] = &GasMu;
   id[nt++] = DOUBLE;
 
+  strcpy(tag[nt], "MaxInflowVelocity");
+  addr[nt] = &MaxInflowVelocity;
+  id[nt++] = DOUBLE;
+  
+  strcpy(tag[nt], "GasProfileParameter");
+  addr[nt] = &GasProfileParameter;
+  id[nt++] = DOUBLE;
+  
   strcpy(tag[nt], "Reionization_z0");
   addr[nt] = &Reionization_z0;
   id[nt++] = DOUBLE;

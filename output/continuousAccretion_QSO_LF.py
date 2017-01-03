@@ -357,7 +357,10 @@ class Results:
         binwidth = 0.25
         NB = (ma - mi) / binwidth
 
+        #print np.max(np.log10(G.QSOLuminosity[w])+np.log10(Msun)-np.log10(yr))
         (counts, binedges) = np.histogram(np.log10(G.QSOLuminosity[w])+np.log10(Msun)-np.log10(yr), range=(mi, ma), bins=NB)
+        #print counts
+        #print binedges
         xaxeshisto = binedges[:-1] + 0.5 * binwidth
 
         ax.set_yscale('log')
@@ -560,9 +563,9 @@ class Results:
         ax.set_yscale('log')
         plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='simulated')
 
-        if(G.z > 5.5 and G.z <=6.5):
-            xaxes, BHnum_max, BHnum_min = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/BH_MF/Willott2010_z6.dat', unpack='True', usecols=(0,1,2))
-            ax.fill_between(np.log10(xaxes), BHnum_min, BHnum_max, alpha=0.1, facecolor='grey')
+        #if(G.z > 5.5 and G.z <=6.5):
+            #xaxes, BHnum_max, BHnum_min = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/BH_MF/Willott2010_z6.dat', unpack='True', usecols=(0,1,2))
+            #ax.fill_between(np.log10(xaxes), BHnum_min, BHnum_max, alpha=0.1, facecolor='grey')
 
         plt.ylabel(r'$\mathrm{number}\ \mathrm{density}$    $[\mathrm{Mpc}^{-3}]$')  # Set the y...
         plt.xlabel(r'$\log\mathrm{M_{BH}}$')  # and the x-axis labels
@@ -592,8 +595,8 @@ if __name__ == '__main__':
         '-d',
         '--dir_name',
         dest='DirName',
-        default='./results/',
-        help='input directory name (default: ./results/)',
+        default='./results/millennium_QSO/',
+        help='input directory name (default: ./results/millennium_QSO/)',
         metavar='DIR',
         )
     parser.add_option(
@@ -610,7 +613,7 @@ if __name__ == '__main__':
         type='int',
         nargs=2,
         dest='FileRange',
-        default=(0, 511),
+        default=(0, 7),
         help='first and last filenumbers (default: 0 7)',
         metavar='FIRST LAST',
         )

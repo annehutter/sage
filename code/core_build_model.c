@@ -383,6 +383,7 @@ void evolve_galaxies(int halonr, int ngal, int tree)	// Note: halonr is here the
             printf("growing BH\n");
             grow_black_hole_continuousAccretion(p, p, 0., time, deltaT / STEPS);
           }
+          Gal[p].hasJustMerged = 0;
       }
     }
   } // Go on to the next STEPS substep

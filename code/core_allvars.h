@@ -38,7 +38,7 @@ do {                                                                \
 #define  SEC_PER_YEAR       3.155e7
 
 #define  MERGER_NUM  10    // number of mergers that are stored for each galaxy
-#define  TEDD_YR     4.5e9
+#define  TEDD_YR     4.5e8
 
 // This structure contains the properties that are output
 struct GALAXY_OUTPUT
@@ -289,9 +289,11 @@ extern double RadioModeEfficiency;
 extern double QuasarModeEfficiency;
 extern double BlackHoleGrowthRate;
 extern double QuasarRadEfficiency;
-extern double GasTemperature;
+extern double QuasarSpectralIndex;
 extern double GasGamma;
 extern double GasMu;
+extern double MaxInflowVelocity;
+extern double GasProfileParameter;
 extern double Reionization_z0;
 extern double Reionization_zr;
 extern double ThresholdSatDisruption;
