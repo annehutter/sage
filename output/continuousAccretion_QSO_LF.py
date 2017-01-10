@@ -261,10 +261,12 @@ class Results:
         plt.figure()
         ax = plt.subplot(111)  # 1 plot on the figure
 
-        w = np.where((G.Mvir  > 0.0) & (G.StellarMass > 0.))[0]
+        w = np.where((G.Mvir  > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccretionRate > 0.))[0]
         # if(len(w) > dilute): w = sample(w, dilute)
 
-        thisPlot = plt.scatter(np.log10(G.Mvir[w] / self.Hubble_h * 1.e10), np.log10(G.QSOBHaccretionRate[w] / self.Hubble_h), marker='o', s=20., alpha=0.8, label='Stars')
+        print np.min(G.QSOBHaccretionRate[w]), np.max(G.QSOBHaccretionRate[w])
+
+        thisPlot = plt.scatter(np.log10(G.Mvir[w] / self.Hubble_h * 1.e10), np.log10(G.QSOBHaccretionRate[w]), marker='o', s=20., alpha=0.8, label='Stars')
         thisPlot.set_clim(vmin=0,vmax=1)
 
         plt.ylabel(r'$\log \dot{M_{BH}}$    $[\mathrm{M}_{\odot}]$')  # Set the y...
@@ -293,18 +295,21 @@ class Results:
 
         BHaccrete = np.zeros(len(w))
 
-        BHaccrete = BHaccrete + G.QSOBHaccretionRate[w] / self.Hubble_h
+        BHaccrete = BHaccrete + G.QSOBHaccretionRate[w]
 
         ax = plt.subplot(111)  # 1 plot on the figure
 
         mi = -8#round(np.min(np.log10(BHaccrete)))
         ma = 4#round(np.max(np.log10(BHaccrete)))
 
-        binwidth = 0.25
+        binwidth = 0.5
         NB = (ma - mi) / binwidth
 
         (counts, binedges) = np.histogram(np.log10(BHaccrete), range=(mi, ma), bins=NB)
         xaxeshisto = binedges[:-1] + 0.5 * binwidth
+
+        print binedges
+        print counts
 
         ax.set_yscale('log')
         plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='los-velocity')
@@ -330,11 +335,13 @@ class Results:
 
         Msun = 2.e33
         c = 3.e10
-        yr = 365.*24.*3600.
+        yr = 3.15336e7
         km_cm = 1.e5
         pc_cm = 3.086e18
         Mpc_cm = 3.086e24
         Lsol = 3.9e33
+
+        MsunDivYr = 6.34196e25
 
         efficiency = 0.1
         gamma = 5./3.
@@ -354,13 +361,13 @@ class Results:
 
         mi = 43
         ma = 50#round(np.max(np.log10(luminosity)))
-        binwidth = 0.25
+        binwidth = 0.5
         NB = (ma - mi) / binwidth
 
         #print np.max(np.log10(G.QSOLuminosity[w])+np.log10(Msun)-np.log10(yr))
         (counts, binedges) = np.histogram(np.log10(G.QSOLuminosity[w])+np.log10(Msun)-np.log10(yr), range=(mi, ma), bins=NB)
-        #print counts
-        #print binedges
+        print counts
+        print binedges
         xaxeshisto = binedges[:-1] + 0.5 * binwidth
 
         ax.set_yscale('log')
@@ -450,7 +457,7 @@ class Results:
         plt.ylabel(r'$\mathrm{number}\ \mathrm{density}$    $[\mathrm{Mpc}^{-3}]$')  # Set the y...
         plt.xlabel(r'$\log L$    $[\mathrm{erg}\ \mathrm{s}^{-1}]$')  # and the x-axis labels
 
-        plt.axis((mi,ma,1.e-9,1.e-3))
+        plt.axis((mi,ma,1.e-9,1.e-2))
         leg = plt.legend(loc='upper right', prop={'size':12})
         leg.draw_frame(False)  # Don't want a box frame
 
@@ -474,7 +481,8 @@ class Results:
         nu1450 = c/1450.*1.e8
 
         tmp = (1. + alpha1) * (1. + alpha2) / (alpha1 - alpha2)
-        M1450luminosity = G.QSOLuminosity[w] * tmp * (nu1450/nuBreak)**alpha2 / nuBreak * Msun / yr
+        M1450luminosity = G.QSOLuminosity[w] * tmp * (nu1450/nuBreak)**alpha2 / nuBreak
+        # M1450luminosity = M1450luminosity * MsunDivYr
 
         zBins = 100000
         thisSum=0.
@@ -485,18 +493,23 @@ class Results:
         thisSum = (1.+self.z)*thisSum
         lumDistance = thisSum
 
-        MUV1450 = -2.5*np.log10(M1450luminosity/(4.*np.pi*lumDistance**2))-48.6-5.*np.log10(lumDistance/(10.*pc_cm))
+        print G.QSOLuminosity[w]
+        print np.min(G.QSOLuminosity[w]), np.max(G.QSOLuminosity[w])
+        print np.log10(MsunDivYr)
+        print np.min(M1450luminosity), np.max(M1450luminosity)
+
+        MUV1450 = -2.5*(np.log10(M1450luminosity/(4.*np.pi*lumDistance**2)) + np.log10(MsunDivYr))-48.6-5.*np.log10(lumDistance/(10.*pc_cm))
 
         print np.max(M1450luminosity)
         print np.min(MUV1450)
 
         if(G.z > 5.5):
-            Jiang16_x,Jiang16_y,Jiang16_ymax,Jiang16_ymin,Jiang16_xmin,Jiang16_xmax = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/Jiang2016_z6.dat', unpack='True', usecols=(0,1,2,3,4,5))
-            Kash15_x,Kash15_y,Kash15_ymax,Kash15_ymin = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/Kashikawa2015_z6.dat', unpack='True', usecols=(0,1,2,3))
-            Giall15_x,Giall15_y,Giall15_ymax,Giall15_ymin = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/Giallongo2015_z6.dat', unpack='True', usecols=(0,1,2,3))
+            Jiang16_x,Jiang16_y,Jiang16_ymax,Jiang16_ymin,Jiang16_xmin,Jiang16_xmax = np.loadtxt('../../observations/Jiang2016_z6.dat', unpack='True', usecols=(0,1,2,3,4,5))
+            Kash15_x,Kash15_y,Kash15_ymax,Kash15_ymin = np.loadtxt('../../observations/Kashikawa2015_z6.dat', unpack='True', usecols=(0,1,2,3))
+            Giall15_x,Giall15_y,Giall15_ymax,Giall15_ymin = np.loadtxt('../../observations/Giallongo2015_z6.dat', unpack='True', usecols=(0,1,2,3))
         elif(G.z > 4.5):
-            Giall15_x,Giall15_y,Giall15_ymax,Giall15_ymin = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/Giallongo2015_z5.dat', unpack='True', usecols=(0,1,2,3))
-            Greer15_x,Greer15_y,Greer15_ymax,Greer15_ymin = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/McGreer2013_z5.dat', unpack='True', usecols=(0,1,2,3))
+            Giall15_x,Giall15_y,Giall15_ymax,Giall15_ymin = np.loadtxt('../../observations/Giallongo2015_z5.dat', unpack='True', usecols=(0,1,2,3))
+            Greer15_x,Greer15_y,Greer15_ymax,Greer15_ymin = np.loadtxt('../../observations/McGreer2013_z5.dat', unpack='True', usecols=(0,1,2,3))
 
         ax = plt.subplot(111)  # 1 plot on the figure
 
@@ -563,9 +576,9 @@ class Results:
         ax.set_yscale('log')
         plt.step(xaxeshisto, counts / binwidth / (self.BoxSize/self.Hubble_h)**3, 'k-', label='simulated')
 
-        #if(G.z > 5.5 and G.z <=6.5):
-            #xaxes, BHnum_max, BHnum_min = np.loadtxt('/lustre/projects/p004_swin/ahutter/QSO_sage/observations/BH_MF/Willott2010_z6.dat', unpack='True', usecols=(0,1,2))
-            #ax.fill_between(np.log10(xaxes), BHnum_min, BHnum_max, alpha=0.1, facecolor='grey')
+        if(G.z > 5.5 and G.z <=6.5):
+            xaxes, BHnum_max, BHnum_min = np.loadtxt('../../observations/BH_MF/Willott2010_z6.dat', unpack='True', usecols=(0,1,2))
+            ax.fill_between(np.log10(xaxes), BHnum_min, BHnum_max, alpha=0.1, facecolor='grey')
 
         plt.ylabel(r'$\mathrm{number}\ \mathrm{density}$    $[\mathrm{Mpc}^{-3}]$')  # Set the y...
         plt.xlabel(r'$\log\mathrm{M_{BH}}$')  # and the x-axis labels

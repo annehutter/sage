@@ -25,7 +25,8 @@ double getSubEddDensity(double BHmass, double cs, double gamma, double mu, doubl
     rad_efficiency = rad_efficiency * 10.;
 
     // result in cm^-3
-    double result = 4.e6 / (BHmass * temperature * sqrt(temperature) * rad_efficiency);
+    // printf("    temperature = %e\t cs = %e\n", temperature, cs);
+    double result = 4.e6 / (BHmass * rad_efficiency) * temperature * sqrt(temperature);
     return result;
 }
 
@@ -89,7 +90,7 @@ double getSuperEddDensity(double BHmass, double cs, double gamma, double mu, dou
     rad_efficiency = rad_efficiency * 10.;
 
     // result in cm^-3
-    double result = 1.e10 / (BHmass * rad_efficiency * temperature * sqrt(temperature)) * pow(meanPhotEnergy, 0.42);    // only part not from Park but from Inayoshi 2016
+    double result = 1.e10 / (BHmass * rad_efficiency) * temperature * sqrt(temperature) * pow(meanPhotEnergy, 0.42);    // only part not from Park but from Inayoshi 2016
     return result;
 }
 
@@ -97,14 +98,14 @@ double getSuperEddDensity(double BHmass, double cs, double gamma, double mu, dou
 // DENSITY AT BONDI RADIUS
 //--------------------------------------------------
 
-double getRhoAtBondiRadius(double BHmass, double GasMass, double Mvir, double cs, double gamma, double parameter)
+double getRhoAtBondiRadius(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double parameter)
 {
     double massFact = 1.e10 / Hubble_h;
-    double rvir = GRAVITY * Mvir * massFact / (cs * cs);
+    double rvir = GRAVITY * Mvir * massFact / (Vvir * Vvir);
     double rBondi_div_rc = BHmass / (parameter * Mvir);
 
     double factor = 1. / (pow(parameter, 3) * (1./parameter - atan(1./parameter)));
-    
+
     double lambdaB = 1.12;
     if(gamma > 1.1) lambdaB = 0.25;
 
@@ -113,10 +114,10 @@ double getRhoAtBondiRadius(double BHmass, double GasMass, double Mvir, double cs
     return result;
 }
 
-double getDensityAtBondiRadius(double BHmass, double GasMass, double Mvir, double cs, double gamma, double mu, double parameter)
+double getDensityAtBondiRadius(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double mu, double parameter)
 {
     // result in g cm^-3
-    double result = getRhoAtBondiRadius(BHmass, GasMass, Mvir, cs, gamma, parameter);
+    double result = getRhoAtBondiRadius(BHmass, GasMass, Mvir, Vvir, cs, gamma, parameter);
     // result in cm^-3
     result = result / (mu * PROTONMASS);
     return result;
@@ -126,9 +127,9 @@ double getDensityAtBondiRadius(double BHmass, double GasMass, double Mvir, doubl
 // BONDI RATE
 //--------------------------------------------------
 
-double getBondiRate(double BHmass, double GasMass, double Mvir, double cs, double gamma, double parameter)
+double getBondiRate(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double parameter)
 {
-    double rho = getRhoAtBondiRadius(BHmass, GasMass, Mvir, cs, gamma, parameter);
+    double rho = getRhoAtBondiRadius(BHmass, GasMass, Mvir, Vvir, cs, gamma, parameter);
     double massFact = SOLAR_MASS * 1.e10 / Hubble_h;
     double Grav_times_BHmass = GRAVITY * BHmass * massFact;
 
@@ -206,8 +207,8 @@ double getBHaccretionMass_EddingtonLimited(double BHmass, double fEdd, double ra
     if(BHmass == 0.) BHmass = 1.e-8 * Hubble_h;
     // printf("Eddington: BHmass = %e\t fEdd = %e\t rad_efficiency = %e\t t = %e\n", BHmass*1.e10/Hubble_h, fEdd, rad_efficiency, dt_yr);
     // printf("Eddington: BHmass = %e\n", BHmass * exp(tmp * dt_yr)*1.e10/Hubble_h);
-    printf("tmp = %e\t dt_yr = %e\n", tmp, dt_yr);
-    double result = BHmass * (exp(tmp * dt_yr) - 1.);   
+    // printf("tmp = %e\t dt_yr = %e\n", tmp, dt_yr);
+    double result = BHmass * (exp(tmp * dt_yr) - 1.);
     // result in 1.e10/h Msun
     return result;
 }
@@ -227,17 +228,17 @@ double getPeakTime_EddingtonLimited(double BHmass, double fEdd, double rad_effic
 // BONDI ACCRETION MODEL
 //--------------------------------------------------
 
-double getBHaccretionRate_Bondi(double BHmass, double GasMass, double Mvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad)
+double getBHaccretionRate_Bondi(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad)
 {
     // in Msun yr^-1
-    double result = (1. - rad_efficiency) * lambdaRad * getBondiRate(BHmass, GasMass, Mvir, cs, gamma, parameter);
+    double result = (1. - rad_efficiency) * lambdaRad * getBondiRate(BHmass, GasMass, Mvir, Vvir, cs, gamma, parameter);
     return result;
 }
 
-double getBHaccretionMass_Bondi(double BHmass, double GasMass, double Mvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad, double dt)
+double getBHaccretionMass_Bondi(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad, double dt)
 {
     double massFact = 1.e10 / Hubble_h;
-    double BondiRate = getBondiRate(BHmass, GasMass, Mvir, cs, gamma, parameter);
+    double BondiRate = getBondiRate(BHmass, GasMass, Mvir, Vvir, cs, gamma, parameter);
     double dt_yr = dt / (SEC_PER_YEAR * Hubble_h * CM_PER_KM) * CM_PER_MPC;
 
     // in Msun
@@ -247,14 +248,15 @@ double getBHaccretionMass_Bondi(double BHmass, double GasMass, double Mvir, doub
     return result;
 }
 
-double getPeakTime_Bondi(double BHmass, double GasMass, double Mvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad, double BHaccrete)
+double getPeakTime_Bondi(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad, double BHaccrete)
 {
-    double BondiRate = getBondiRate(BHmass, GasMass, Mvir, cs, gamma, parameter);
+    // printf("BHmass = %e\t, GasMass = %e\t, Mvir = %e\t cs = %e\t gamma = %e\t parameter = %e\n", BHmass, GasMass, Mvir, cs, gamma, parameter);
+    double BondiRate = getBondiRate(BHmass, GasMass, Mvir, Vvir, cs, gamma, parameter);
     double massFact = 1.e10 / Hubble_h;
 
     double peakTime_yr = BHaccrete * massFact / ((1. - rad_efficiency) * lambdaRad * BondiRate);
     double peakTime = peakTime_yr * (SEC_PER_YEAR * Hubble_h * CM_PER_KM) / CM_PER_MPC;
-    printf("dt_peak = %e\n", peakTime);
+    // printf("BondiRate = %e\tdt_peak = %e\n", BondiRate, peakTime);
     return peakTime;
 }
 
@@ -291,7 +293,7 @@ double getPeakTime_Inflow(double cs, double rad_efficiency, double BHaccrete)
 
     double peakTime_yr = BHaccrete * massFact / ((1. - rad_efficiency) * InflowRate);
     double peakTime = peakTime_yr * (SEC_PER_YEAR * Hubble_h * CM_PER_KM) / CM_PER_MPC;
-    printf("dt_peak = %e\n", peakTime);
+    // printf("InflowRate = %e\tdt_peak = %e\n", InflowRate, peakTime);
     return peakTime;
 }
 
@@ -359,14 +361,14 @@ double getTcycle(double BHmass, double density, double density_crit, double mean
     return result;
 }
 
-double getBHmassBoundary(double GasMass, double Mvir, double cs, double mu, double parameter, double BoundaryValue)
+double getBHmassBoundary(double GasMass, double Mvir, double Vvir, double cs, double mu, double parameter, double BoundaryValue)
 {
     double massFact = 1.e10 / Hubble_h;
-    double tmp = (cs * cs) / GRAVITY;
+    double tmp = cs / GRAVITY;
     double factor = (1./parameter - atan(1./parameter));
-    
+
     // in Msun
-    double result = GasMass * tmp * tmp * tmp * factor / (4. * PI * Mvir * mu * PROTONMASS  * BoundaryValue * SOLAR_MASS * SOLAR_MASS);
+    double result = GasMass * tmp * tmp * tmp * cs * Vvir * Vvir * factor / (4. * PI * Mvir * mu * PROTONMASS  * BoundaryValue * SOLAR_MASS * SOLAR_MASS);
 //     printf("result = %e\t BoundrayValue = %e\t tmp = %e\t factor = %e\n", result, BoundaryValue, tmp, factor);
     // in 1.e10 h^-1 Msun
     result = result / massFact;
@@ -383,13 +385,13 @@ double getLmaxDivLEdd(double BHmass, double density, double density_crit, double
 
     double result;
     if(density > density_crit){
-        result = 5.e-6 * density * rad_efficiency * sqrt(temperature) / meanPhotEnergy;  
+        result = 5.e-6 * density * rad_efficiency * sqrt(temperature) / meanPhotEnergy;
     }else{
-        result = 6.e-7 * density * rad_efficiency * temperature / meanPhotEnergy; 
+        result = 6.e-7 * density * rad_efficiency * temperature / meanPhotEnergy;
     }
 
     if(result > 1.) result = 1.;
-    
+
     return result;
 }
 
@@ -431,8 +433,8 @@ double getLuminosity_radIneff_log(double BHaccretionRate, double maccr, double b
 {
     double rad_efficiency;
     if(maccr > boundary) rad_efficiency = 2./maccr * (1. + log(maccr / boundary));
-    else rad_efficiency = 1./maccr;
-    
+    else rad_efficiency = 2./boundary;
+
     double result = rad_efficiency / (1. - rad_efficiency) * BHaccretionRate * C * C;
     return result;
 }
@@ -440,7 +442,7 @@ double getLuminosity_radIneff_log(double BHaccretionRate, double maccr, double b
 double getLuminosity_radIneff_quot(double BHaccretionRate, double maccr, double boundary)
 {
     double rad_efficiency = boundary / (10. + boundary * maccr);
-    
+
     double result = rad_efficiency / (1. - rad_efficiency) * BHaccretionRate * C * C;
     return result;
 }
@@ -457,13 +459,13 @@ double getLuminosity_oscillations(double BHmass, double density, double density_
     double Lmax = getLmaxDivLEdd(BHmass, density, density_crit, cs, gamma, mu, meanPhotEnergy, rad_efficiency) * LEdd;
     double fduty = getFduty(density, density_crit, cs, gamma, mu);
     double tcycle = getTcycle(BHmass, density, density_crit, meanPhotEnergy, rad_efficiency);
-    
+
     srand((unsigned)time(NULL));
     double t = tcycle * ((double)rand()/(double)RAND_MAX);
-    
+
     double result = Lmax * exp(t / (fduty * tcycle));
-    printf("L = %e\n", result);
-    
+    // printf("L = %e\n", result);
+
     return result;
 }
 
