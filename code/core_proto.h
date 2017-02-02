@@ -55,8 +55,10 @@ void track_BHgrowth(int merger_centralgal, int p, double BHaccrete, double time)
 void accreteOnBH_EddingtonLimited(double BHmass, double BHaccrete, double rad_efficiency, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity);
 void accreteOnBH_EddingtonLimited_redshift(double BHmass, double BHaccrete, double redshift, double rad_efficiency, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity);
 void accreteOnBH_Hopkins(double BHmass, double BHaccrete, double rad_efficiency, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity);
-void accreteOnBH_Ryu(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double cs_inflow, double gamma, double rad_efficiency, double parameter, double BHaccrete, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity);
-void accreteOnBH_Park(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double cs_inflow, double gamma, double mu, double rad_efficiency, double parameter, double BHaccrete, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity);
+void accreteOnBH_Ryu(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double cs_inflow, double gamma, double rad_efficiency, double parameter, double BHaccrete, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity, int *type_acc_global);
+void accreteOnBH_Ryu_MCF(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double cs_inflow, double gamma, double mu, double logZ, double rad_efficiency, double parameter, double BHaccrete, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity, int *type_acc_global);
+void accreteOnBH_Park(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double cs_inflow, double gamma, double mu, double rad_efficiency, double parameter, double BHaccrete, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity, int *type_acc_global);
+void accreteOnBH_Park_MCF(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double cs_inflow, double gamma, double mu, double logZ, double rad_efficiency, double parameter, double BHaccrete, double dt, double *BHaccretionRate, double *BHaccretionMass, double *Luminosity, int *type_acc_global);
 
 
 double getSubEddDensity(double BHmass, double cs, double gamma, double mu, double rad_efficiency);
@@ -65,7 +67,10 @@ double getCriticalDensity(double BHmass, double cs, double gamma, double mu, dou
 double getSuperEddDensity(double BHmass, double cs, double gamma, double mu, double meanPhotEnergy, double rad_efficiency);
 double getRhoAtBondiRadius(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double parameter);
 double getDensityAtBondiRadius(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double mu, double parameter);
+double getRhoAtBondiRadius_MCF(double BHmass, double Vvir, double cs, double gamma, double mu, double logZ);
+double getDensityAtBondiRadius_MCF(double BHmass, double Vvir, double cs, double gamma, double mu, double logZ);
 double getBondiRate(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double parameter);
+double getBondiRate_MCF(double BHmass, double Vvir, double cs, double gamma, double mu, double logZ);
 double getEddRate(double BHmass);
 double getInflowRate(double cs);
 double getBondiMass(double BHmass, double GasMass, double Mvir, double parameter);
@@ -75,6 +80,9 @@ double getPeakTime_EddingtonLimited(double BHmass, double fEdd, double rad_effic
 double getBHaccretionRate_Bondi(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad);
 double getBHaccretionMass_Bondi(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad, double dt);
 double getPeakTime_Bondi(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double parameter, double rad_efficiency, double lambdaRad, double BHaccrete);
+double getBHaccretionRate_Bondi_MCF(double BHmass, double Vvir, double cs, double gamma, double mu, double logZ, double rad_efficiency, double lambdaRad, double dt);
+double getBHaccretionMass_Bondi_MCF(double BHmass, double Vvir, double cs, double gamma, double mu, double logZ, double rad_efficiency, double lambdaRad, double dt);
+double getPeakTime_Bondi_MCF(double BHmass, double Vvir, double cs, double gamma, double mu, double logZ, double rad_efficiency, double lambdaRad, double BHaccrete);
 double getBHaccretionRate_Inflow(double cs, double rad_efficiency);
 double getBHaccretionMass_Inflow(double BHmass, double cs, double rad_efficiency, double dt);
 double getPeakTime_Inflow(double cs, double rad_efficiency, double BHaccrete);
@@ -82,7 +90,8 @@ double getMeanPhotEnergy(double spectralIndex);
 double getLambda_rad(double BHmass, double density, double cs, double gamma, double mu, double meanPhotEnergy);
 double getFduty(double density, double density_crit, double cs, double gamma, double mu);
 double getTcycle(double BHmass, double density, double density_crit, double meanPhotEnergy, double rad_efficiency);
-double getBHmassBoundary(double GasMass, double Mvir, double Vvir, double cs, double mu, double parameter, double BoundaryValue);
+double getBHmassBoundary(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double mu, double parameter, double BoundaryValue);
+double getBHmassBoundary_MCF(double BHmass, double GasMass, double Mvir, double Vvir, double cs, double gamma, double mu, double parameter, double BoundaryValue);
 double getLmaxDivLEdd(double BHmass, double density, double density_crit, double cs, double gamma, double mu, double meanPhotEnergy, double rad_efficiency);
 double getMaccr(double BHaccretionRate, double BHmass);
 double getEddLuminosity(double BHmass);

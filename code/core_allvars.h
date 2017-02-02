@@ -18,6 +18,7 @@ do {                                                                \
 #define  ABSOLUTEMAXSNAPS 1000
 
 #define  PI          3.14159265359
+#define  EPSILON     1.e-5
 
 #define  GRAVITY     6.672e-8
 #define  SOLAR_MASS  1.989e33

@@ -81,7 +81,7 @@ int main(int argc, char **argv)
   ThisNode = malloc(MPI_MAX_PROCESSOR_NAME * sizeof(char));
 
   MPI_Get_processor_name(ThisNode, &nodeNameLen);
-  if (nodeNameLen >= MPI_MAX_PROCESSOR_NAME) 
+  if (nodeNameLen >= MPI_MAX_PROCESSOR_NAME)
   {
     printf("Node name string not long enough!...\n");
     ABORT(0);
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
   read_parameter_file(argv[1]);
   init();
 
-	
+
 #ifdef MPI
   for(filenr = FirstFile+ThisTask; filenr <= LastFile; filenr += NTask)
 #else
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
 
     for(tree = 0; tree < Ntrees; tree++)
     {
-      
+
 			assert(!gotXCPU);
 
       if(tree % 10000 == 0)
@@ -171,9 +171,8 @@ int main(int argc, char **argv)
   //free Ages. But first
   //reset Age to the actual allocated address
   Age--;
-  myfree(Age);                              
-  
+  myfree(Age);
+
   exitfail = 0;
   return 0;
 }
-

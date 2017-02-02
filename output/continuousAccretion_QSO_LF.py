@@ -249,6 +249,76 @@ class Results:
 
         return G
 
+# --------------------------------------------------------
+
+    def BHgrowth(self, G):
+
+        print 'Plotting the QSO BHaccrete distribution of all galaxies'
+
+        seed(2222)
+
+        plt.figure()
+        ax = plt.subplot(111)  # 1 plot on the figure
+
+        w = np.where((G.Mvir  > 0.0) & (G.BlackHoleMass > 0.))[0]
+        # if(len(w) > dilute): w = sample(w, dilute)
+
+        thisPlot = plt.scatter(G.GalaxyIndex[w], np.log10(G.BlackHoleMass[w]), marker='o', s=30., alpha=0.8,  c=G.GalaxyIndex[w]/320., cmap = cm.jet_r, label='Stars')
+        thisPlot.set_clim(vmin=0,vmax=1)
+
+        ax.set_axisbelow(True)
+        ax.xaxis.grid(color='gray', linestyle='dashed')
+        plt.axis((0,320.,-5.,-1.))
+        plt.xlabel(r'Index')  # Set the y...
+        plt.ylabel(r'$\log M_{BH}$    $[\mathrm{M}_{\odot}]$')  # and the x-axis labels
+
+        outputFile = OutputDir + '30.BHgrowth_z' + str(G.z) + OutputFormat
+        plt.savefig(outputFile)  # Save the figure
+        print 'Saved file to', outputFile
+        plt.close()
+
+        # Add this plot to our output list
+        OutputList.append(outputFile)
+
+# --------------------------------------------------------
+
+    def BHgrowthrate(self, G):
+
+        print 'Plotting the QSO BHaccrete distribution of all galaxies'
+
+        seed(2222)
+
+        plt.figure()
+        ax = plt.subplot(111)  # 1 plot on the figure
+
+        w = np.where((G.Mvir > 0.0) & (G.MergNum == 4))
+        print G.QSOLuminosity[w]
+        print G.MergNum[w]
+        print G.QSOBHaccretionRate[w]
+        print G.BlackHoleMass[w]*1.e10/0.73
+        print G.Mvir[w]
+        print G.HotGas[w]
+
+        w = np.where((G.Mvir  > 0.0) & (G.BlackHoleMass > 0.))[0]
+        # if(len(w) > dilute): w = sample(w, dilute)
+
+        thisPlot = plt.scatter(G.GalaxyIndex[w], np.log10(G.QSOBHaccretionRate[w]), marker='o', s=30., alpha=0.8,  c=G.GalaxyIndex[w]/320., cmap = cm.jet_r, label='Stars')
+        thisPlot.set_clim(vmin=0,vmax=1)
+
+        ax.set_axisbelow(True)
+        ax.xaxis.grid(color='gray', linestyle='dashed')
+        plt.axis((0,320.,-2.,9.))
+        plt.xlabel(r'Index')  # Set the y...
+        plt.ylabel(r'$\log M_{BH}$    $[\mathrm{M}_{\odot}]$')  # and the x-axis labels
+
+        outputFile = OutputDir + '31.BHgrowthrate_z' + str(G.z) + OutputFormat
+        plt.savefig(outputFile)  # Save the figure
+        print 'Saved file to', outputFile
+        plt.close()
+
+        # Add this plot to our output list
+        OutputList.append(outputFile)
+
 
 # --------------------------------------------------------
 
@@ -266,11 +336,11 @@ class Results:
 
         print np.min(G.QSOBHaccretionRate[w]), np.max(G.QSOBHaccretionRate[w])
 
-        thisPlot = plt.scatter(np.log10(G.Mvir[w] / self.Hubble_h * 1.e10), np.log10(G.QSOBHaccretionRate[w]), marker='o', s=20., alpha=0.8, label='Stars')
+        thisPlot = plt.scatter(np.log10((G.BlackHoleMass[w]-G.QSOBHaccretionMass[w]) / self.Hubble_h * 1.e10), np.log10(G.QSOBHaccretionRate[w]), marker='o', s=20., alpha=0.8,  c=G.MergNum[w]/4., cmap = cm.jet_r, label='Stars')
         thisPlot.set_clim(vmin=0,vmax=1)
 
         plt.ylabel(r'$\log \dot{M_{BH}}$    $[\mathrm{M}_{\odot}]$')  # Set the y...
-        plt.xlabel(r'$\log M_{vir}$    $[\mathrm{M}_{\odot}]$')  # and the x-axis labels
+        plt.xlabel(r'$\log M_{BH,initial}$    $[\mathrm{M}_{\odot}]$')  # and the x-axis labels
 
         outputFile = OutputDir + '16.QSOBHaccreteDistribution_z' + str(G.z) + OutputFormat
         plt.savefig(outputFile)  # Save the figure
@@ -359,7 +429,7 @@ class Results:
         # -----------------------------------------------------------------------------
         ax = plt.subplot(111)  # 1 plot on the figure
 
-        mi = 43
+        mi = 42
         ma = 50#round(np.max(np.log10(luminosity)))
         binwidth = 0.5
         NB = (ma - mi) / binwidth
@@ -514,7 +584,7 @@ class Results:
         ax = plt.subplot(111)  # 1 plot on the figure
 
         mi = -29.
-        ma = -18.
+        ma = -16.
         binwidth = 0.25
         NB = (ma - mi) / binwidth
 
@@ -578,13 +648,69 @@ class Results:
 
         if(G.z > 5.5 and G.z <=6.5):
             xaxes, BHnum_max, BHnum_min = np.loadtxt('../../observations/BH_MF/Willott2010_z6.dat', unpack='True', usecols=(0,1,2))
-            ax.fill_between(np.log10(xaxes), BHnum_min, BHnum_max, alpha=0.1, facecolor='grey')
+            ax.fill_between(np.log10(xaxes), BHnum_min, BHnum_max, alpha=0.1, facecolor='grey', label='Willott 2010')
+        if(G.z > 2.5 and G.z <= 3.5):
+            xaxes, BHnum = np.loadtxt('../../observations/BH_MF/Hopkins2007_z3.dat', unpack='True', usecols=(0,1))
+            plt.plot(xaxes, BHnum, color='grey', label='Hopkins 2007')
+        if(G.z > 1.5 and G.z <= 2.5):
+            xaxes, BHnum = np.loadtxt('../../observations/BH_MF/Hopkins2007_z2.dat', unpack='True', usecols=(0,1))
+            plt.plot(xaxes, BHnum, color='grey', label='Hopkins 2007')
+        if(G.z > 0.5 and G.z <= 1.5):
+            xaxes, BHnum = np.loadtxt('../../observations/BH_MF/Hopkins2007_z1.dat', unpack='True', usecols=(0,1))
+            plt.plot(xaxes, BHnum, color='grey', label='Hopkins 2007')
+        if(G.z <= 0.5):
+            xaxes, BHnum = np.loadtxt('../../observations/BH_MF/Hopkins2007_z0.dat', unpack='True', usecols=(0,1))
+            plt.plot(xaxes, BHnum, color='grey', label='Hopkins 2007')
+
+        if(G.z > 2.0 and G.z <= 3.):
+            xaxes, BHnum, BHnum_max, BHnum_min = np.loadtxt('../../observations/BH_MF/Vestergaard2009_z2-3.dat', unpack='True', usecols=(0,1,2,3))
+            plt.errorbar(xaxes, 10.**(BHnum+9-xaxes), yerr=[10.**BHnum - 10.**BHnum_min, 10.**BHnum_max - 10.**BHnum], fmt='o', color='grey', label='Vestergaard 2009')
+        if(G.z > 1.5 and G.z <= 2.):
+            xaxes, BHnum, BHnum_max, BHnum_min = np.loadtxt('../../observations/BH_MF/Vestergaard2009_z1-5-2.dat', unpack='True', usecols=(0,1,2,3))
+            plt.errorbar(xaxes, 10.**(BHnum+9-xaxes), yerr=[10.**BHnum - 10.**BHnum_min, 10.**BHnum_max - 10.**BHnum], fmt='o', color='grey', label='Vestergaard 2009')
+        if(G.z > 1.0 and G.z <= 1.5):
+            xaxes, BHnum, BHnum_max, BHnum_min = np.loadtxt('../../observations/BH_MF/Vestergaard2009_z1-1-5.dat', unpack='True', usecols=(0,1,2,3))
+            plt.errorbar(xaxes, 10.**(BHnum+9-xaxes), yerr=[10.**BHnum - 10.**BHnum_min, 10.**BHnum_max - 10.**BHnum], fmt='o', color='grey', label='Vestergaard 2009')
 
         plt.ylabel(r'$\mathrm{number}\ \mathrm{density}$    $[\mathrm{Mpc}^{-3}]$')  # Set the y...
         plt.xlabel(r'$\log\mathrm{M_{BH}}$')  # and the x-axis labels
         plt.legend(loc='best')
 
         outputFile = OutputDir + '22.BHmass_function_' + str(G.z) + OutputFormat
+        plt.savefig(outputFile)  # Save the figure
+        print 'Saved file to', outputFile
+        plt.close()
+
+        # Add this plot to our output list
+        OutputList.append(outputFile)
+# --------------------------------------------------------
+
+    def QSOLum_distribution(self, G):
+
+        print 'Plotting the QSO BHaccrete distribution of all galaxies'
+
+        seed(2222)
+
+        plt.figure()
+        ax = plt.subplot(111)  # 1 plot on the figure
+
+        Msun = 2.e33
+        yr = 3.15336e7
+
+        w = np.where((G.Mvir  > 0.0) & (G.StellarMass > 0.) & (G.QSOBHaccretionRate > 0.))[0]
+        # if(len(w) > dilute): w = sample(w, dilute)
+
+        print np.min(G.QSOBHaccretionRate[w]), np.max(G.QSOBHaccretionRate[w])
+
+        # thisPlot = plt.scatter(np.log10((G.BlackHoleMass[w]-G.QSOBHaccretionMass[w]) / self.Hubble_h * 1.e10), np.log10(G.QSOBHaccretionRate[w]), marker='o', s=20., alpha=0.8,  c=G.MergNum[w]/4., cmap = cm.jet_r, label='Stars')
+        thisPlot = plt.scatter(np.log10((G.BlackHoleMass[w]-G.QSOBHaccretionMass[w]) / self.Hubble_h * 1.e10), np.log10(G.QSOLuminosity[w])+np.log10(Msun)-np.log10(yr), marker='o', s=20., alpha=0.8,  c=G.MergNum[w]/4., cmap = cm.jet_r, label='Stars')
+
+        thisPlot.set_clim(vmin=0,vmax=1)
+
+        plt.xlabel(r'$\log M_{BH}$    $[\mathrm{M}_{\odot}]$')  # Set the y...
+        plt.ylabel(r'$\log L$    $[\mathrm{L}_{\odot}]$')  # and the x-axis labels
+
+        outputFile = OutputDir + '23.QSOLuminosityDistribution_z' + str(G.z) + OutputFormat
         plt.savefig(outputFile)  # Save the figure
         print 'Saved file to', outputFile
         plt.close()
@@ -655,7 +781,10 @@ if __name__ == '__main__':
 
     print 'Anaylzing snapshot', G.SnapNum[0], "at redshift", G.z
 
+    # res.BHgrowth(G)
+    # res.BHgrowthrate(G)
     res.QSOBHaccrete_distribution(G)
     res.QSOBHaccrete_function(G)
-    res.QSOluminosity_function(G)
     res.BHmass_function(G)
+    res.QSOLum_distribution(G)
+    res.QSOluminosity_function(G)

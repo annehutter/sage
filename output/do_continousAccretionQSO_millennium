@@ -1,0 +1,12 @@
+#! /bin/bash
+if [ $# -lt 0 ]; then
+    echo "Usage: ./do_continousAccretionQSO_millennium"
+else
+    directory=$1
+    numFiles=$2
+    
+    for z in 6.197 5.289 4.179 3.060 2.070 1.386 0.000
+    do
+        python continuousAccretion_QSO_LF.py -d $directory -f model_z$z -n 0 $numFiles
+    done
+fi
