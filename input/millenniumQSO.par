@@ -46,7 +46,7 @@ SupernovaRecipeOn     1   ;0: switch off
 ReionizationOn        1   ;0: switch off
 DiskInstabilityOn     1   ;0: switch off; 1: bulge and BH growth through instabilities w. instability starbursts
 TrackBHgrowthOn       0   ;0: switch off; 1: store BH growth by mergers & disk instabilities
-ContinuousAccretionOn 4   ;0: switch off; >0: apply a continuous accretion to BH; 1: Eddington limited; 2: Eddington limited with variable fEdd; 3: Hopkins model; 4: Ryu 2016 model; 5: Park 2011/2012 model
+ContinuousAccretionOn 1   ;0: switch off; >0: apply a continuous accretion to BH; 1: Eddington limited; 2: Eddington limited with variable fEdd; 3: Hopkins model; 4: Ryu 2016 model; 5: Park 2011/2012 model
 
 
 %------------------------------------------

@@ -73,7 +73,7 @@ void free_tree_table(void)
 
   myfree(TreeFirstHalo);
   myfree(TreeNHalos);
-	
+
 	// Don't forget to free the open file handle
 	if(load_fd) {
 		fclose(load_fd);
@@ -95,10 +95,10 @@ void load_tree(int filenr, int nr)
   myfread(Halo, TreeNHalos[nr], sizeof(struct halo_data), load_fd);
 
   MaxGals = (int)(MAXGALFAC * TreeNHalos[nr]);
-  if(MaxGals < 10000)
-    MaxGals = 10000;
+  if(MaxGals < 100000)
+    MaxGals = 100000;
 
-  FoF_MaxGals = 10000;
+  FoF_MaxGals = 100000;
 
   HaloAux = mymalloc(sizeof(struct halo_aux_data) * TreeNHalos[nr]);
   HaloGal = mymalloc(sizeof(struct GALAXY) * MaxGals);

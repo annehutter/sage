@@ -249,6 +249,23 @@ class Results:
 
         return G
 
+
+# --------------------------------------------------------
+
+    def writeTable(self, G):
+
+        print 'Writing QSO data into table'
+
+        Msun = 2.e33
+        yr = 3.15336e7
+
+        w = np.where((G.Mvir > 0.0) & (G.StellarMass > 0.) & (G.BlackHoleMass > 0.) & (G.QSOBHaccretionRate > 0.))[0]
+
+        G.QSOLuminosity[w] = G.QSOLuminosity[w] + np.log10(Msun)-np.log10(yr)
+
+        outputFile = OutputDir + 'table_' + str(G.z) + '.dat'
+        np.savetxt(outputFile, np.c_[G.Mvir[w], G.HotGas[w], G.ColdGas[w], G.StellarMass[w], G.BlackHoleMass[w], G.QSOBHaccretionRate[w], G.QSOBHaccretionMass[w], G.QSOLuminosity[w], G.ColdGasToAccrete[w], G.TimeOfLastMajorMerger[w], G.TimeOfLastMinorMerger[w]], header='Mvir [1.e10 h^-1 Msun]\tHot Gas [1.e10 h^-1 Msun]\tCold Gas [1.e10 h^-1 Msun]\tStellarMass [1.e10 h^-1 Msun]\tBlackHoleMass [1.e10 h^-1 Msun]\tBHaccretionrate [Msun yr^-1]\tBHaccretionMass [1.e10 h^-1 Msun]\tLuminosity[erg s^-1\tColdGasToaccrete]\tTimeOfLastMajorMerger\tTimeOfLastMinorMerger')
+
 # --------------------------------------------------------
 
     def BHgrowth(self, G):
@@ -783,6 +800,7 @@ if __name__ == '__main__':
 
     # res.BHgrowth(G)
     # res.BHgrowthrate(G)
+    res.writeTable(G)
     res.QSOBHaccrete_distribution(G)
     res.QSOBHaccrete_function(G)
     res.BHmass_function(G)

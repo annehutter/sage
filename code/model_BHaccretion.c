@@ -14,17 +14,20 @@ void accreteOnBH_EddingtonLimited(double BHmass, double BHaccrete, double rad_ef
     double dt_peak;
     double fEdd = 1.;
     double BHaccretionMassEdd = getBHaccretionMass_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt);
-    if(BHaccretionMassEdd > BHaccrete * (1. - rad_efficiency))
+    if(BHaccrete > EPSILON * BHmass)
     {
-      dt_peak = getPeakTime_EddingtonLimited(BHmass, fEdd, rad_efficiency, BHaccrete * (1. - rad_efficiency));
-      *BHaccretionRate = 0.;//getBHaccretionRate_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt_peak);
-      *BHaccretionMass = getBHaccretionMass_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt_peak);
-      *Luminosity = 0.;//getLuminosity_radEfficient(*BHaccretionRate, rad_efficiency);
-    }else{
-      dt_peak = dt;
-      *BHaccretionRate = getBHaccretionRate_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt_peak);
-      *BHaccretionMass = getBHaccretionMass_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt_peak);
-      *Luminosity = getLuminosity_radEfficient(*BHaccretionRate, rad_efficiency);
+        if(BHaccretionMassEdd > BHaccrete * (1. - rad_efficiency))
+        {
+          dt_peak = getPeakTime_EddingtonLimited(BHmass, fEdd, rad_efficiency, BHaccrete * (1. - rad_efficiency));
+          *BHaccretionRate = 0.;//getBHaccretionRate_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt_peak);
+          *BHaccretionMass = getBHaccretionMass_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt_peak);
+          *Luminosity = 0.;//getLuminosity_radEfficient(*BHaccretionRate, rad_efficiency);
+        }else{
+          dt_peak = dt;
+          *BHaccretionRate = getBHaccretionRate_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt_peak);
+          *BHaccretionMass = getBHaccretionMass_EddingtonLimited(BHmass, fEdd, rad_efficiency, dt_peak);
+          *Luminosity = getLuminosity_radEfficient(*BHaccretionRate, rad_efficiency);
+        }
     }
 }
 

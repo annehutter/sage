@@ -209,7 +209,7 @@ void grow_black_hole_continuousAccretion(int merger_centralgal, int p, double ma
           accreteOnBH_Ryu(Gal[merger_centralgal].BlackHoleMass, Gal[merger_centralgal].HotGas+Gal[merger_centralgal].ColdGas, currentMvir, currentVvir*UnitVelocity_in_cm_per_s*0.58, 1.07e6, MaxInflowVelocity, GasGamma, QuasarRadEfficiency, parameter, BHaccrete, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity, &type_acc);
           break;
         case 5:
-          accreteOnBH_Park(Gal[merger_centralgal].BlackHoleMass, Gal[merger_centralgal].HotGas, currentMvir, currentVvir*UnitVelocity_in_cm_per_s, 1.07e6, MaxInflowVelocity, GasGamma, GasMu, QuasarRadEfficiency, parameter, BHaccrete, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity, &type_acc);
+          accreteOnBH_Park(Gal[merger_centralgal].BlackHoleMass, Gal[merger_centralgal].HotGas+Gal[merger_centralgal].ColdGas, currentMvir, currentVvir*UnitVelocity_in_cm_per_s, 1.07e6, MaxInflowVelocity, GasGamma, GasMu, QuasarRadEfficiency, parameter, BHaccrete, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity, &type_acc);
         // case 6:
         //   accreteOnBH_Ryu_MCF(Gal[merger_centralgal].BlackHoleMass, Gal[merger_centralgal].HotGas+Gal[merger_centralgal].ColdGas, currentMvir, currentVvir*UnitVelocity_in_cm_per_s*0.58, 1.07e6, MaxInflowVelocity, GasGamma, GasMu, logZ, QuasarRadEfficiency, GasProfileParameter, BHaccrete, dt, &BHaccretionRate, &BHaccretionMass, &Luminosity, &type_acc);
         //   break;
